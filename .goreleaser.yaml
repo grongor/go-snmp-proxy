@@ -1,0 +1,24 @@
+before:
+    hooks:
+        - go mod download
+
+archives:
+    -   files:
+            - LICENSE
+            - README.md
+            - config.toml.dist
+
+builds:
+    -   main: ./cmd/snmp-proxy
+        binary: snmp-proxy
+        env:
+            - CGO_ENABLED=1
+        goos:
+            - linux
+        goarch:
+            - amd64
+
+checksum:
+    name_template: 'checksums.txt'
+
+changelog:
