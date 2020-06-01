@@ -1,0 +1,23 @@
+archives:
+    -   files:
+            - LICENSE
+            - README.md
+            - config.toml.dist
+    -   id: binary
+        format: binary
+        name_template: snmp-proxy
+
+builds:
+    -   main: ./cmd/snmp-proxy
+        binary: snmp-proxy
+        env:
+            - CGO_ENABLED=1
+        goos:
+            - linux
+        goarch:
+            - amd64
+
+checksum:
+    name_template: 'checksums.txt'
+
+changelog:

@@ -1,0 +1,61 @@
+name: CI
+
+on:
+    push:
+    pull_request:
+
+jobs:
+    build:
+        name: Build
+        runs-on: ubuntu-18.04
+        steps:
+            -   uses: actions/checkout@v2
+            -   uses: actions/setup-go@v2
+            -   name: Install dependencies
+                run: sudo apt update && sudo apt install libsnmp-dev
+            -   name: Build
+                run: go build ./cmd/snmp-proxy
+
+    test:
+        name: Test
+        runs-on: ubuntu-18.04
+        steps:
+            -   uses: actions/checkout@v2
+            -   uses: actions/setup-go@v2
+            -   name: Install dependencies
+                run: sudo apt update && sudo apt install libsnmp-dev python3-pip snmp-mibs-downloader
+            -   name: Install snmpsim
+                run: sudo pip3 install snmpsim
+            -   name: Run tests
+                run: make test
+
+    coverage:
+        name: Code Coverage
+        runs-on: ubuntu-18.04
+        steps:
+            -   uses: actions/checkout@v2
+            -   uses: actions/setup-go@v2
+            -   name: Install dependencies
+                run: sudo apt update && sudo apt install libsnmp-dev python3-pip snmp-mibs-downloader
+            -   name: Install snmpsim
+                run: sudo pip3 install snmpsim
+            -   name: Download go-acc
+                run: GO111MODULE=off go get -u github.com/ory/go-acc
+            -   name: Generate Code Coverage
+                run: $(go env GOPATH)/bin/go-acc --covermode set --output coverage.cov ./...
+            -   name: Send coverage
+                uses: shogo82148/actions-goveralls@v1
+                with:
+                    path-to-profile: coverage.cov
+
+    lint:
+        name: Lint
+        runs-on: ubuntu-18.04
+        steps:
+            -   uses: actions/checkout@v2
+            -   name: Install dependencies
+                run: sudo apt update && sudo apt install libsnmp-dev
+            -   name: golangci-lint
+                uses: golangci/golangci-lint-action@v1
+                with:
+                    version: v1.27

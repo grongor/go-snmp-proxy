@@ -1,0 +1,17 @@
+[api]
+listen = "127.0.0.1:1234"
+
+[common]
+debug = true
+panicWatch = true
+
+[common.sentry]
+dsn = ""
+
+[metrics]
+listen = "0.0.0.0:9700"
+
+[snmp]
+maxTimeoutSeconds = 300
+maxRetries = 10
+strictMibParsing = true
