@@ -1,6 +1,7 @@
 go-snmp-proxy
 =============
 
+![CI](https://github.com/grongor/go-snmp-proxy/workflows/CI/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/grongor/go-snmp-proxy/badge.svg)](https://coveralls.io/github/grongor/go-snmp-proxy)
 
 HTTP proxy server for SNMP requests, written in Go.
