@@ -11,32 +11,207 @@ import (
 	"github.com/soniah/gosnmp"
 )
 
+type requestResult struct {
+	requestNo int
+	result    []interface{}
+	error     error
+}
+
 type Requester interface {
-	ExecuteRequest(request Request) ([]interface{}, error)
+	ExecuteRequest(apiRequest *ApiRequest) ([][]interface{}, error)
 }
 
 type GosnmpRequester struct {
 	mibDataProvider *MibDataProvider
 }
 
-func (r *GosnmpRequester) ExecuteRequest(request Request) ([]interface{}, error) {
-	snmp, err := r.getSnmp(request)
+func (r *GosnmpRequester) ExecuteRequest(apiRequest *ApiRequest) ([][]interface{}, error) {
+	resultsChan := make(chan requestResult)
+
+	for requestNo, request := range apiRequest.Requests {
+		switch request.RequestType {
+		case Get, GetNext:
+			go r.executeGet(apiRequest, requestNo, resultsChan)
+		default:
+			go r.executeWalk(apiRequest, requestNo, resultsChan)
+		}
+	}
+
+	errChan := make(chan error)
+	results := make([][]interface{}, len(apiRequest.Requests))
+
+	go func() {
+		var errored bool
+
+		for i := len(apiRequest.Requests); i > 0; i-- {
+			result := <-resultsChan
+
+			if errored {
+				continue
+			}
+
+			if result.error != nil {
+				errored = true
+				errChan <- result.error
+
+				continue
+			}
+
+			results[result.requestNo] = result.result
+		}
+
+		close(errChan)
+	}()
+
+	err := <-errChan
 	if err != nil {
 		return nil, err
 	}
 
-	switch request.RequestType {
-	case Get, GetNext:
-		return r.executeGet(snmp, request)
-	default:
-		return r.executeWalk(snmp, request)
+	return results, nil
+}
+
+func (r *GosnmpRequester) executeGet(apiRequest *ApiRequest, requestNo int, resultChan chan<- requestResult) {
+	var (
+		err    error
+		result = requestResult{requestNo: requestNo}
+	)
+
+	defer func() {
+		result.error = err
+
+		resultChan <- result
+	}()
+
+	snmp, err := r.createSnmpHandler(apiRequest)
+	if err != nil {
+		return
+	}
+
+	request := apiRequest.Requests[requestNo]
+
+	var getter func(oids []string) (*gosnmp.SnmpPacket, error)
+	if request.RequestType == Get {
+		getter = snmp.Get
+	} else {
+		getter = snmp.GetNext
+	}
+
+	packet, err := getter(request.Oids)
+	if err != nil {
+		return
+	}
+
+	if packet.Error == gosnmp.NoSuchName {
+		var oidsString string
+
+		if len(request.Oids) == 1 {
+			oidsString = request.Oids[0]
+		} else {
+			oidsString = "one of " + strings.Join(request.Oids, " ")
+		}
+
+		if request.RequestType == Get {
+			err = fmt.Errorf("no such instance: %s", oidsString)
+		} else {
+			err = fmt.Errorf("end of mib: %s", oidsString)
+		}
+
+		return
+	}
+
+	result.result = make([]interface{}, 0, len(packet.Variables))
+
+	for _, dataUnit := range packet.Variables {
+		if dataUnit.Type == gosnmp.NoSuchObject {
+			err = fmt.Errorf("no such object: %s", dataUnit.Name)
+
+			return
+		}
+
+		if dataUnit.Type == gosnmp.NoSuchInstance {
+			err = fmt.Errorf("no such instance: %s", dataUnit.Name)
+
+			return
+		}
+
+		if dataUnit.Type == gosnmp.EndOfMibView {
+			err = fmt.Errorf("end of mib: %s", dataUnit.Name)
+
+			return
+		}
+
+		result.result = append(result.result, dataUnit.Name, r.getPduValue(dataUnit))
 	}
 }
 
-func (r *GosnmpRequester) getSnmp(request Request) (gosnmp.Handler, error) {
+func (r *GosnmpRequester) executeWalk(apiRequest *ApiRequest, requestNo int, resultChan chan<- requestResult) {
+	var (
+		err    error
+		result = requestResult{requestNo: requestNo}
+	)
+
+	defer func() {
+		result.error = err
+
+		resultChan <- result
+	}()
+
+	snmp, err := r.createSnmpHandler(apiRequest)
+	if err != nil {
+		return
+	}
+
+	request := apiRequest.Requests[requestNo]
+
+	snmp.SetMaxRepetitions(request.MaxRepetitions)
+
+	var walker func(string, gosnmp.WalkFunc) error
+	if apiRequest.Version == SnmpVersion(gosnmp.Version1) {
+		walker = snmp.Walk
+	} else {
+		walker = snmp.BulkWalk
+	}
+
+	oid := request.Oids[0]
+
+	err = walker(oid, func(dataUnit gosnmp.SnmpPDU) error {
+		result.result = append(result.result, dataUnit.Name, r.getPduValue(dataUnit))
+
+		return nil
+	})
+	if err != nil {
+		return
+	}
+
+	if len(result.result) != 0 {
+		return
+	}
+
+	packet, err := snmp.GetNext([]string{oid})
+	if err != nil {
+		return
+	}
+
+	if len(packet.Variables) != 1 || packet.Variables[0].Type == gosnmp.NoSuchObject {
+		err = fmt.Errorf("no such object: %s", oid)
+
+		return
+	}
+
+	if packet.Variables[0].Type != gosnmp.EndOfMibView && packet.Variables[0].Type != gosnmp.Null {
+		err = fmt.Errorf("no such instance: %s", oid)
+
+		return
+	}
+
+	err = fmt.Errorf("end of mib: %s", oid)
+}
+
+func (r *GosnmpRequester) createSnmpHandler(apiRequest *ApiRequest) (gosnmp.Handler, error) {
 	snmp := gosnmp.NewHandler()
 
-	hostAndPort := strings.Split(request.Host, ":")
+	hostAndPort := strings.Split(apiRequest.Host, ":")
 	if len(hostAndPort) > 2 {
 		return nil, errors.New("invalid host, expected host[:port]")
 	}
@@ -52,11 +227,11 @@ func (r *GosnmpRequester) getSnmp(request Request) (gosnmp.Handler, error) {
 		snmp.SetPort(uint16(port))
 	}
 
-	snmp.SetCommunity(request.Community)
-	snmp.SetVersion(gosnmp.SnmpVersion(request.Version))
-	snmp.SetTimeout(request.Timeout)
+	snmp.SetCommunity(apiRequest.Community)
+	snmp.SetVersion(gosnmp.SnmpVersion(apiRequest.Version))
+	snmp.SetTimeout(apiRequest.Timeout)
 	snmp.SetExponentialTimeout(false)
-	snmp.SetRetries(int(request.Retries))
+	snmp.SetRetries(int(apiRequest.Retries))
 
 	err := snmp.Connect()
 	if err != nil {
@@ -64,97 +239,6 @@ func (r *GosnmpRequester) getSnmp(request Request) (gosnmp.Handler, error) {
 	}
 
 	return snmp, nil
-}
-
-func (r *GosnmpRequester) executeGet(snmp gosnmp.Handler, request Request) ([]interface{}, error) {
-	var getter func(oids []string) (*gosnmp.SnmpPacket, error)
-	if request.RequestType == Get {
-		getter = snmp.Get
-	} else {
-		getter = snmp.GetNext
-	}
-
-	packet, err := getter(request.Oids)
-	if err != nil {
-		return nil, err
-	}
-
-	if packet.Error == gosnmp.NoSuchName {
-		var oidsString string
-		if len(request.Oids) == 1 {
-			oidsString = request.Oids[0]
-		} else {
-			oidsString = "one of " + strings.Join(request.Oids, " ")
-		}
-
-		if request.RequestType == Get {
-			return nil, fmt.Errorf("no such instance: %s", oidsString)
-		} else {
-			return nil, fmt.Errorf("end of mib: %s", oidsString)
-		}
-	}
-
-	result := make([]interface{}, 0, len(packet.Variables))
-
-	for _, dataUnit := range packet.Variables {
-		if dataUnit.Type == gosnmp.NoSuchObject {
-			return nil, fmt.Errorf("no such object: %s", dataUnit.Name)
-		}
-
-		if dataUnit.Type == gosnmp.NoSuchInstance {
-			return nil, fmt.Errorf("no such instance: %s", dataUnit.Name)
-		}
-
-		if dataUnit.Type == gosnmp.EndOfMibView {
-			return nil, fmt.Errorf("end of mib: %s", dataUnit.Name)
-		}
-
-		result = append(result, dataUnit.Name, r.getPduValue(dataUnit))
-	}
-
-	return result, nil
-}
-
-func (r *GosnmpRequester) executeWalk(snmp gosnmp.Handler, request Request) ([]interface{}, error) {
-	snmp.SetMaxRepetitions(request.MaxRepetitions)
-
-	var walker func(string, gosnmp.WalkFunc) error
-	if request.Version == SnmpVersion(gosnmp.Version1) {
-		walker = snmp.Walk
-	} else {
-		walker = snmp.BulkWalk
-	}
-
-	oid := request.Oids[0]
-	var result []interface{}
-
-	err := walker(oid, func(dataUnit gosnmp.SnmpPDU) error {
-		result = append(result, dataUnit.Name, r.getPduValue(dataUnit))
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if len(result) == 0 {
-		packet, err := snmp.GetNext([]string{oid})
-		if err != nil {
-			return nil, err
-		}
-
-		if len(packet.Variables) != 1 || packet.Variables[0].Type == gosnmp.NoSuchObject {
-			return nil, fmt.Errorf("no such object: %s", oid)
-		}
-
-		if packet.Variables[0].Type != gosnmp.EndOfMibView && packet.Variables[0].Type != gosnmp.Null {
-			return nil, fmt.Errorf("no such instance: %s", oid)
-		}
-
-		return nil, fmt.Errorf("end of mib: %s", oid)
-	}
-
-	return result, nil
 }
 
 func (r *GosnmpRequester) getPduValue(dataUnit gosnmp.SnmpPDU) interface{} {

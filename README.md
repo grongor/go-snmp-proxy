@@ -16,7 +16,7 @@ Use cases
 - use HTTP authentication for your SNMP requests
 - encrypt "SNMP traffic" between the client and the server
 - bypass firewall
-- ...post your use-case via issue :-)
+- ...post your use-case via issue/PR :-)
 
 Only SNMP versions 1 and 2c are supported. If you want support for version 3, please, send a pull request.
 
@@ -35,16 +35,25 @@ How it works
 The application provides a single HTTP endpoint `/snmp-proxy`, which accepts POST requests:
 ```json
 {
-    "request_type": "getNext",
     "host": "192.168.1.1",
     "community": "public",
-    "oids": [
-        ".1.2.3",
-        ".4.5.6"
-    ],
     "version": "2c",
     "timeout": 10,
-    "retries": 3
+    "retries": 3,
+    "requests": [
+        {
+            "request_type": "getNext",
+            "oids": [
+                ".1.2.3",
+                ".4.5.6"
+            ]
+        },
+        {
+            "request_type": "walk",
+            "oids": [".7.8.9"],
+            "max_repetitions": 20
+        }
+    ]
 }
 ```
 
@@ -53,10 +62,20 @@ to the client. Response might look like this:
 ```json
 {
     "result": [
-        ".1.2.3.4.5",
-        123,
-        ".4.5.6.7.8",
-        "lorem"
+        [
+            ".1.2.3.4.5",
+            123,
+            ".4.5.6.7.8",
+            "lorem"
+        ],
+        [
+            ".7.8.9.1.1",
+            "some",
+            ".7.8.9.1.2",
+            "values",
+            ".7.8.9.1.3",
+            "here"
+        ]
     ]
 }
 ```
