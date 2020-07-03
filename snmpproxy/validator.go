@@ -2,6 +2,7 @@ package snmpproxy
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -10,35 +11,51 @@ type RequestValidator struct {
 	maxRetries uint8
 }
 
-func (v *RequestValidator) Validate(request Request) error {
-	if len(request.Oids) == 0 {
-		return fmt.Errorf("at least one OID must be provided")
-	}
-
-	if request.RequestType == Walk && len(request.Oids) > 1 {
-		return fmt.Errorf("only single OID is supported with RequestType = Walk, got %d", len(request.Oids))
-	}
-
-	for _, oid := range request.Oids {
-		if oid[0] != '.' {
-			return fmt.Errorf("all OIDs must begin with a dot")
-		}
-	}
-
-	if request.Timeout > v.maxTimeout {
+func (v *RequestValidator) Validate(apiRequest *ApiRequest) error {
+	if apiRequest.Timeout > v.maxTimeout {
 		return fmt.Errorf(
 			"maximum allowed timeout is %d seconds, got %d seconds",
 			v.maxTimeout/time.Second,
-			request.Timeout/time.Second,
+			apiRequest.Timeout/time.Second,
 		)
 	}
 
-	if request.Retries > v.maxRetries {
-		return fmt.Errorf("maximum allowed number of retries is %d, got %d", v.maxRetries, request.Retries)
+	if apiRequest.Retries > v.maxRetries {
+		return fmt.Errorf("maximum allowed number of retries is %d, got %d", v.maxRetries, apiRequest.Retries)
 	}
 
-	if request.RequestType == Walk && request.MaxRepetitions == 0 {
-		return fmt.Errorf("field max_repetitions is required for RequestType Walk, and it mustn't be zero")
+	if len(apiRequest.Requests) == 0 {
+		return fmt.Errorf("at least one Request must be provided")
+	}
+
+	for i, request := range apiRequest.Requests {
+		if len(request.Oids) == 0 {
+			return fmt.Errorf("request[%d]: at least one OID must be provided", i)
+		}
+
+		if request.RequestType == Walk && len(request.Oids) > 1 {
+			return fmt.Errorf(
+				"request[%d]: only single OID is supported with RequestType = Walk, got %d: %s",
+				i,
+				len(request.Oids),
+				strings.Join(request.Oids, ", "),
+			)
+		}
+
+		for _, oid := range request.Oids {
+			if oid[0] != '.' {
+				return fmt.Errorf("request[%d]: all OIDs must begin with a dot, got: %s", i, oid)
+			}
+		}
+
+		if request.RequestType == Walk && request.MaxRepetitions == 0 {
+			return fmt.Errorf(
+				"request[%d]: field max_repetitions is required for RequestType = Walk, "+
+					"and it mustn't be zero, oid: %s",
+				i,
+				request.Oids[0],
+			)
+		}
 	}
 
 	return nil

@@ -22,15 +22,15 @@ type mockRequester struct {
 	mock.Mock
 }
 
-func (r *mockRequester) ExecuteRequest(request snmpproxy.Request) ([]interface{}, error) {
-	args := r.Mock.Called(request)
+func (r *mockRequester) ExecuteRequest(apiRequest *snmpproxy.ApiRequest) ([][]interface{}, error) {
+	args := r.Mock.Called(apiRequest)
 
 	result := args.Get(0)
 	if result == nil {
 		return nil, args.Error(1)
 	}
 
-	return result.([]interface{}), args.Error(1)
+	return result.([][]interface{}), args.Error(1)
 }
 
 type errReader struct {
@@ -42,15 +42,16 @@ func (errReader) Read(_ []byte) (n int, err error) {
 
 const getRequestBody = `
 {
-    "request_type": "get",
     "host": "localhost",
-    "oids": [".1.2.3"],
     "version": "2c",
-    "timeout": 3
+    "timeout": 3,
+    "requests": [
+        {"request_type": "get", "oids": [".1.2.3"]}
+    ]
 }
 `
 
-func TestHandlerErrorNotPost(t *testing.T) {
+func TestListenerErrorNotPost(t *testing.T) {
 	require := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
@@ -68,7 +69,7 @@ func TestHandlerErrorNotPost(t *testing.T) {
 	require.Equal(http.StatusMethodNotAllowed, response.StatusCode)
 }
 
-func TestHandlerErrorReadingRequest(t *testing.T) {
+func TestListenerErrorReadingRequest(t *testing.T) {
 	require := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
@@ -87,7 +88,7 @@ func TestHandlerErrorReadingRequest(t *testing.T) {
 	require.Equal(`{"error":"test error"}`, read(response.Body))
 }
 
-func TestHandlerErrorUnmarshalingRequest(t *testing.T) {
+func TestListenerErrorUnmarshalingRequest(t *testing.T) {
 	tests := []struct {
 		name        string
 		requestBody string
@@ -101,7 +102,7 @@ func TestHandlerErrorUnmarshalingRequest(t *testing.T) {
 		{
 			name:        "not expected json struct",
 			requestBody: `{"something": "else"}`,
-			err:         `{"error":"field request_type mustn't be empty"}`,
+			err:         `{"error":"field host mustn't be empty"}`,
 		},
 	}
 	for _, test := range tests {
@@ -127,7 +128,7 @@ func TestHandlerErrorUnmarshalingRequest(t *testing.T) {
 	}
 }
 
-func TestHandlerErrorRequestValidatorError(t *testing.T) {
+func TestListenerErrorRequestValidatorError(t *testing.T) {
 	require := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
@@ -136,13 +137,14 @@ func TestHandlerErrorRequestValidatorError(t *testing.T) {
 
 	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "")
 
-	requestBody := `
+	const requestBody = `
 {
-    "request_type": "get",
     "host": "localhost",
-    "oids": [".1.2.3"],
     "version": "2c",
-    "timeout": 100
+    "timeout": 100,
+    "requests": [
+        {"request_type": "get", "oids": [".1.2.3"]}
+    ]
 }
 `
 
@@ -157,7 +159,7 @@ func TestHandlerErrorRequestValidatorError(t *testing.T) {
 	require.Equal(`{"error":"maximum allowed timeout is 10 seconds, got 100 seconds"}`, read(response.Body))
 }
 
-func TestHandlerErrorRequesterError(t *testing.T) {
+func TestListenerErrorRequesterError(t *testing.T) {
 	require := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
@@ -180,7 +182,7 @@ func TestHandlerErrorRequesterError(t *testing.T) {
 	require.Equal(`{"error":"some error"}`, read(response.Body))
 }
 
-func TestHandlerNoError(t *testing.T) {
+func TestListenerNoError(t *testing.T) {
 	require := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
@@ -188,7 +190,7 @@ func TestHandlerNoError(t *testing.T) {
 	requester := &mockRequester{}
 	defer requester.AssertExpectations(t)
 
-	requester.On("ExecuteRequest", mock.Anything).Once().Return([]interface{}{".1.2.3", 123}, nil)
+	requester.On("ExecuteRequest", mock.Anything).Once().Return([][]interface{}{{".1.2.3", 123}}, nil)
 
 	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "")
 
@@ -200,7 +202,7 @@ func TestHandlerNoError(t *testing.T) {
 	response := recorder.Result()
 
 	require.Equal(http.StatusOK, response.StatusCode)
-	require.Equal(`{"result":[".1.2.3",123]}`, read(response.Body))
+	require.Equal(`{"result":[[".1.2.3",123]]}`, read(response.Body))
 }
 
 func TestStartAndClose(t *testing.T) {
@@ -211,7 +213,7 @@ func TestStartAndClose(t *testing.T) {
 	requester := &mockRequester{}
 	defer requester.AssertExpectations(t)
 
-	requester.On("ExecuteRequest", mock.Anything).Once().Return([]interface{}{".1.2.3", 123}, nil)
+	requester.On("ExecuteRequest", mock.Anything).Once().Return([][]interface{}{{".1.2.3", 123}}, nil)
 
 	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "localhost:15721")
 	listener.Start()
@@ -221,7 +223,7 @@ func TestStartAndClose(t *testing.T) {
 	response, err := http.Post("http://localhost:15721/snmp-proxy", "", strings.NewReader(getRequestBody))
 	require.NoError(err)
 	require.Equal(http.StatusOK, response.StatusCode)
-	require.Equal(`{"result":[".1.2.3",123]}`, read(response.Body))
+	require.Equal(`{"result":[[".1.2.3",123]]}`, read(response.Body))
 
 	listener.Close()
 

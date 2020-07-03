@@ -39,7 +39,7 @@ func (l *ApiListener) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 
-	var apiRequest Request
+	apiRequest := &ApiRequest{}
 	var response = Response{}
 
 	defer func() {
@@ -56,7 +56,7 @@ func (l *ApiListener) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 
-	err = json.Unmarshal(body, &apiRequest)
+	err = json.Unmarshal(body, apiRequest)
 	if err != nil {
 		l.logger.Debugw("failed unmarshal API request", zap.Error(err), "requestBody", string(body))
 		writer.WriteHeader(http.StatusBadRequest)
@@ -78,10 +78,14 @@ func (l *ApiListener) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 
 	result, err := l.requester.ExecuteRequest(apiRequest)
 	if err == nil {
+		l.logger.Debugw("request successful", "request", apiRequest)
+
 		writer.WriteHeader(http.StatusOK)
 
 		response.Result = result
 	} else {
+		l.logger.Debugw("request failed", zap.Error(err), "request", apiRequest)
+
 		writer.WriteHeader(http.StatusInternalServerError)
 
 		response.Error = err.Error()
