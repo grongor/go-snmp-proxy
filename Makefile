@@ -1,3 +1,4 @@
+GO_ACC ?= go-acc
 export BIN = ${PWD}/bin
 export GOBIN = $(BIN)
 
@@ -20,9 +21,17 @@ fix: $(BIN)/golangci-lint
 
 .PHONY: test
 test:
-	timeout 300 go test ./...
-	timeout 300 go test --race ./...
-	timeout 300 go test --count 100 ./...
+	timeout 300 go test $(GO_TEST_FLAGS) ./...
+	timeout 300 go test $(GO_TEST_FLAGS) --race ./...
+	timeout 300 go test $(GO_TEST_FLAGS) --count 100 ./...
+
+.PHONY: coverage
+coverage:
+	$(GO_ACC) --covermode set --output coverage.cov --ignore ./snmpproxy/mib ./...
+	$(GO_ACC) --covermode set --output coverage-netsnmp.cov ./snmpproxy/mib
+	$(GO_ACC) --covermode set --output coverage-nonetsnmp.cov ./snmpproxy/mib -- -tags=nonetsnmp
+	cat coverage-netsnmp.cov coverage-nonetsnmp.cov | grep -v 'mode: ' >> coverage.cov
+	rm coverage-netsnmp.cov coverage-nonetsnmp.cov
 
 .PHONY: clean
 clean:

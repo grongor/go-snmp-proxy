@@ -10,6 +10,7 @@ import (
 
 	"github.com/grongor/go-snmp-proxy/metrics"
 	"github.com/grongor/go-snmp-proxy/snmpproxy"
+	"github.com/grongor/go-snmp-proxy/snmpproxy/mib"
 )
 
 func main() {
@@ -25,14 +26,14 @@ func main() {
 
 	validator := snmpproxy.NewRequestValidator(config.Snmp.MaxTimeoutSeconds, config.Snmp.MaxRetries)
 
-	mibParser := snmpproxy.NewNetsnmpMibParser(config.Logger, config.Snmp.StrictMibParsing)
+	mibParser := mib.NewNetsnmpMibParser(config.Logger, config.Snmp.StrictMibParsing)
 
 	displayHints, err := mibParser.Parse()
 	if err != nil {
 		config.Logger.Fatalw("mib parser error: ", zap.Error(err))
 	}
 
-	mibDataProvider := snmpproxy.NewMibDataProvider(displayHints)
+	mibDataProvider := mib.NewDataProvider(displayHints)
 	requester := snmpproxy.NewGosnmpRequester(mibDataProvider)
 
 	apiListener := snmpproxy.NewApiListener(validator, requester, config.Logger, config.Api.Listen)

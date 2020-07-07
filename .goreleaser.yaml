@@ -1,19 +1,44 @@
 archives:
-    -   files:
+    -   builds:
+            - default
+        files:
             - LICENSE
             - README.md
             - config.toml.dist
-    -   id: binary
+    -   builds:
+            - default
+        id: binary
         format: binary
         name_template: snmp-proxy
+    -   id: no-netsnmp
+        builds:
+            - no-netsnmp
+        files:
+            - LICENSE
+            - README.md
+            - config.toml.dist
+        name_template: "{{ .ProjectName }}-no-netsnmp_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
 builds:
-    -   main: ./cmd/snmp-proxy
+    -   id: default
+        main: ./cmd/snmp-proxy
         binary: snmp-proxy
         env:
             - CGO_ENABLED=1
         goos:
             - linux
+        goarch:
+            - amd64
+
+    -   id: no-netsnmp
+        main: ./cmd/snmp-proxy
+        binary: snmp-proxy
+        flags:
+            - -tags=nonetsnmp
+        goos:
+            - linux
+            - darwin
+#            - windows # todo need to figure out how to deal with panicwatch
         goarch:
             - amd64
 

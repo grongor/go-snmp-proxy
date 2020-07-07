@@ -9,6 +9,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/soniah/gosnmp"
+
+	"github.com/grongor/go-snmp-proxy/snmpproxy/mib"
 )
 
 type requestResult struct {
@@ -22,7 +24,7 @@ type Requester interface {
 }
 
 type GosnmpRequester struct {
-	mibDataProvider *MibDataProvider
+	mibDataProvider *mib.DataProvider
 }
 
 func (r *GosnmpRequester) ExecuteRequest(apiRequest *ApiRequest) ([][]interface{}, error) {
@@ -245,9 +247,9 @@ func (r *GosnmpRequester) getPduValue(dataUnit gosnmp.SnmpPDU) interface{} {
 	switch dataUnit.Type {
 	case gosnmp.OctetString:
 		displayHint := r.mibDataProvider.GetDisplayHint(dataUnit.Name)
-		if displayHint == DisplayHintString ||
+		if displayHint == mib.DisplayHintString ||
 			// best effort to display octet strings correctly without the MIBs
-			displayHint == DisplayHintUnknown && r.isStringPrintable(dataUnit.Value.([]byte)) {
+			displayHint == mib.DisplayHintUnknown && r.isStringPrintable(dataUnit.Value.([]byte)) {
 			return string(dataUnit.Value.([]byte))
 		}
 
@@ -273,6 +275,6 @@ func (r *GosnmpRequester) isStringPrintable(value []byte) bool {
 	return true
 }
 
-func NewGosnmpRequester(mibDataProvider *MibDataProvider) *GosnmpRequester {
+func NewGosnmpRequester(mibDataProvider *mib.DataProvider) *GosnmpRequester {
 	return &GosnmpRequester{mibDataProvider: mibDataProvider}
 }
