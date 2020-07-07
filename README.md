@@ -107,6 +107,9 @@ so that it knows how to format them. MIB parsing was inspired by
 In case that OID is of the type OctetString, and it isn't found in the MIBs, then we try to detect whether the string
 is printable (utf8 valid + all characters are printable). If it isn't, it's formatted as `AB C0 D5 D6...`.
 
+MIBs parsing can be skipped by using a binary built with `-tags=nonetsnmp`.
+These binaries are also available in the [Releases](https://github.com/grongor/go-snmp-proxy/releases).
+
 Metrics
 -------
 
@@ -117,11 +120,14 @@ of `POST /snmp-proxy` requests (count, durations).
 Shared libraries
 ----------------
 
-You will have to install a shared library for the `snmp-proxy`: `libsnmp` (contained in `libsnmp-dev`).
+Unless you use binary built with `-tags=nonetsnmp`, you will have to install a shared library for the `snmp-proxy`:
+`libsnmp` (contained in `libsnmp-dev`).
 
 Binaries available in the [Releases](https://github.com/grongor/go-snmp-proxy/releases) will be built on the Ubuntu LTS
 and thus compatible with the version of this library available in the Ubuntu LTS (and stable Debian).
-If you that doesn't match your target system, you can:
+If that doesn't match your target system, you can:
  - install the expected version of `libsnmp` (you will usually have the newer version, but it should be possible
    to install older one)
  - build the `snmp-proxy` yourself in the same environment as you expected the `snmp-proxy` to run
+ - use binary built with `-tags=nonetsnmp`, also available in the
+   [Releases](https://github.com/grongor/go-snmp-proxy/releases)

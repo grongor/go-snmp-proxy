@@ -16,6 +16,15 @@ jobs:
             -   name: Build
                 run: go build ./cmd/snmp-proxy
 
+    build-no-netsnmp:
+        name: Build without netsnmp
+        runs-on: ubuntu-18.04
+        steps:
+            -   uses: actions/checkout@v2
+            -   uses: actions/setup-go@v2
+            -   name: Build
+                run: go build -tags=nonetsnmp ./cmd/snmp-proxy
+
     test:
         name: Test
         runs-on: ubuntu-18.04
@@ -28,6 +37,19 @@ jobs:
                 run: sudo pip3 install snmpsim
             -   name: Run tests
                 run: make test
+
+    test-no-netsnmp:
+        name: Test without netsnmp
+        runs-on: ubuntu-18.04
+        steps:
+            -   uses: actions/checkout@v2
+            -   uses: actions/setup-go@v2
+            -   name: Install dependencies
+                run: sudo apt update && sudo apt install python3-pip
+            -   name: Install snmpsim
+                run: sudo pip3 install snmpsim
+            -   name: Run tests
+                run: GO_TEST_FLAGS=-tags=nonetsnmp make test
 
     coverage:
         name: Code Coverage
@@ -42,7 +64,7 @@ jobs:
             -   name: Download go-acc
                 run: GO111MODULE=off go get -u github.com/ory/go-acc
             -   name: Generate Code Coverage
-                run: $(go env GOPATH)/bin/go-acc --covermode set --output coverage.cov ./...
+                run: GO_ACC="$(go env GOPATH)/bin/go-acc" make coverage
             -   name: Send coverage
                 uses: shogo82148/actions-goveralls@v1
                 with:

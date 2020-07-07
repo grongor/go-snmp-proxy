@@ -1,4 +1,6 @@
-package snmpproxy
+// +build !nonetsnmp
+
+package mib
 
 /*
 #cgo LDFLAGS: -lnetsnmp -L/usr/local/lib
@@ -18,20 +20,6 @@ import (
 
 	"go.uber.org/zap"
 )
-
-type DisplayHint uint8
-
-const (
-	DisplayHintUnknown = DisplayHint(iota)
-	DisplayHintString
-	DisplayHintHexadecimal
-)
-
-type DisplayHints map[string]DisplayHint
-
-type MibParser interface {
-	Parse() (DisplayHints, error)
-}
 
 // This parser was inspired by https://github.com/prometheus/snmp_exporter/tree/master/generator
 type NetsnmpMibParser struct {
@@ -139,22 +127,4 @@ func (p *NetsnmpMibParser) findStringTypesDisplayHints(displayHints DisplayHints
 
 func NewNetsnmpMibParser(logger *zap.SugaredLogger, strictParsing bool) *NetsnmpMibParser {
 	return &NetsnmpMibParser{logger: logger, strictParsing: strictParsing}
-}
-
-type MibDataProvider struct {
-	displayHints DisplayHints
-}
-
-func (p *MibDataProvider) GetDisplayHint(oid string) DisplayHint {
-	for length := len(oid); length > 7; length = strings.LastIndex(oid[:length], ".") {
-		if displayHint, ok := p.displayHints[oid[:length]]; ok {
-			return displayHint
-		}
-	}
-
-	return DisplayHintUnknown
-}
-
-func NewMibDataProvider(displayHints DisplayHints) *MibDataProvider {
-	return &MibDataProvider{displayHints: displayHints}
 }
