@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,15 +23,32 @@ type ApiListener struct {
 	server    *http.Server
 }
 
-func (l *ApiListener) Start() {
+func (l *ApiListener) Start() error {
+	var (
+		ln  net.Listener
+		err error
+	)
+
+	if strings.HasSuffix(l.server.Addr, ".sock") {
+		ln, err = net.Listen("unix", l.server.Addr)
+	} else {
+		ln, err = net.Listen("tcp", l.server.Addr)
+	}
+
+	if err != nil {
+		return err
+	}
+
 	go func() {
-		err := l.server.ListenAndServe()
+		err := l.server.Serve(ln)
 		if !errors.Is(err, http.ErrServerClosed) {
-			l.logger.Fatalw("failed to start API listener", zap.Error(err))
+			l.logger.Fatalw("http.Serve error", zap.Error(err))
 		}
 	}()
 
 	l.logger.Info("API listener started")
+
+	return nil
 }
 
 func (l *ApiListener) ServeHTTP(writer http.ResponseWriter, request *http.Request) {

@@ -37,7 +37,11 @@ func main() {
 	requester := snmpproxy.NewGosnmpRequester(mibDataProvider)
 
 	apiListener := snmpproxy.NewApiListener(validator, requester, config.Logger, config.Api.Listen)
-	apiListener.Start()
+
+	err = apiListener.Start()
+	if err != nil {
+		config.Logger.Fatalw("failed to start API listener", zap.Error(err))
+	}
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)

@@ -1,11 +1,14 @@
 package snmpproxy_test
 
 import (
+	"context"
 	"errors"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -230,6 +233,57 @@ func TestStartAndClose(t *testing.T) {
 	response, err = http.Post("http://localhost:15721/snmp-proxy", "", strings.NewReader(getRequestBody))
 	require.Nil(response)
 	require.Error(err)
+}
+
+func TestStartAndCloseOnSocket(t *testing.T) {
+	require := require.New(t)
+
+	prometheus.DefaultRegisterer = prometheus.NewRegistry()
+
+	requester := &mockRequester{}
+	defer requester.AssertExpectations(t)
+
+	requester.On("ExecuteRequest", mock.Anything).Once().Return([][]interface{}{{".1.2.3", 123}}, nil)
+
+	f, err := ioutil.TempFile("", "snmp-proxy-test-*.sock")
+	require.NoError(err)
+	require.NoError(f.Close())
+	require.NoError(os.Remove(f.Name()))
+
+	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), f.Name())
+	err = listener.Start()
+	require.NoError(err)
+
+	time.Sleep(time.Millisecond * 10)
+
+	client := http.Client{
+		Transport: &http.Transport{
+			DialContext: func(context.Context, string, string) (net.Conn, error) {
+				return net.Dial("unix", f.Name())
+			},
+		},
+	}
+
+	response, err := client.Post("http://socket/snmp-proxy", "", strings.NewReader(getRequestBody))
+	require.NoError(err)
+	require.Equal(http.StatusOK, response.StatusCode)
+	require.Equal(`{"result":[[".1.2.3",123]]}`, read(response.Body))
+
+	listener.Close()
+
+	response, err = client.Post("http://socket/snmp-proxy", "", strings.NewReader(getRequestBody))
+	require.Nil(response)
+	require.Error(err)
+}
+
+func TestStartError(t *testing.T) {
+	require := require.New(t)
+
+	prometheus.DefaultRegisterer = prometheus.NewRegistry()
+
+	listener := snmpproxy.NewApiListener(newValidator(), &mockRequester{}, zap.NewNop().Sugar(), "localhost:80")
+	err := listener.Start()
+	require.EqualError(err, "listen tcp 127.0.0.1:80: bind: permission denied")
 }
 
 func read(r io.Reader) string {
