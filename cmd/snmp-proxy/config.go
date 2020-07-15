@@ -15,7 +15,8 @@ import (
 
 type Configuration struct {
 	Api struct {
-		Listen string
+		Listen            string
+		SocketPermissions os.FileMode // only ever used when Listen is a Unix socket
 	}
 	Common struct {
 		Debug      bool

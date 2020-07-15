@@ -61,7 +61,7 @@ func TestListenerErrorNotPost(t *testing.T) {
 
 	requester := &mockRequester{}
 
-	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "")
+	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "", 0)
 
 	request := httptest.NewRequest("GET", "/snmp-proxy", errReader{})
 
@@ -79,7 +79,7 @@ func TestListenerErrorReadingRequest(t *testing.T) {
 
 	requester := &mockRequester{}
 
-	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "")
+	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "", 0)
 
 	request := httptest.NewRequest("POST", "/snmp-proxy", errReader{})
 
@@ -117,7 +117,7 @@ func TestListenerErrorUnmarshalingRequest(t *testing.T) {
 			requester := &mockRequester{}
 			defer requester.AssertExpectations(t)
 
-			listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "")
+			listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "", 0)
 
 			request := httptest.NewRequest("POST", "/snmp-proxy", strings.NewReader(test.requestBody))
 
@@ -138,7 +138,7 @@ func TestListenerErrorRequestValidatorError(t *testing.T) {
 
 	requester := &mockRequester{}
 
-	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "")
+	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "", 0)
 
 	const requestBody = `
 {
@@ -172,7 +172,7 @@ func TestListenerErrorRequesterError(t *testing.T) {
 
 	requester.On("ExecuteRequest", mock.Anything).Once().Return(nil, errors.New("some error"))
 
-	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "")
+	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "", 0)
 
 	request := httptest.NewRequest("POST", "/snmp-proxy", strings.NewReader(getRequestBody))
 
@@ -195,7 +195,7 @@ func TestListenerNoError(t *testing.T) {
 
 	requester.On("ExecuteRequest", mock.Anything).Once().Return([][]interface{}{{".1.2.3", 123}}, nil)
 
-	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "")
+	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "", 0)
 
 	request := httptest.NewRequest("POST", "/snmp-proxy", strings.NewReader(getRequestBody))
 
@@ -218,7 +218,7 @@ func TestStartAndClose(t *testing.T) {
 
 	requester.On("ExecuteRequest", mock.Anything).Once().Return([][]interface{}{{".1.2.3", 123}}, nil)
 
-	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "localhost:15721")
+	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "localhost:15721", 0)
 	listener.Start()
 
 	time.Sleep(time.Millisecond * 10)
@@ -250,7 +250,7 @@ func TestStartAndCloseOnSocket(t *testing.T) {
 	require.NoError(f.Close())
 	require.NoError(os.Remove(f.Name()))
 
-	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), f.Name())
+	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), f.Name(), 0)
 	err = listener.Start()
 	require.NoError(err)
 
@@ -276,12 +276,35 @@ func TestStartAndCloseOnSocket(t *testing.T) {
 	require.Error(err)
 }
 
+func TestStartSocketWithCorrectPermissions(t *testing.T) {
+	require := require.New(t)
+
+	prometheus.DefaultRegisterer = prometheus.NewRegistry()
+
+	requester := &mockRequester{}
+
+	f, err := ioutil.TempFile("", "snmp-proxy-test-*.sock")
+	require.NoError(err)
+	require.NoError(f.Close())
+	require.NoError(os.Remove(f.Name()))
+
+	expectedMode := os.FileMode(0124)
+
+	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), f.Name(), expectedMode)
+	err = listener.Start()
+	require.NoError(err)
+
+	stat, err := os.Stat(f.Name())
+	require.NoError(err)
+	require.Equal(expectedMode, stat.Mode().Perm())
+}
+
 func TestStartError(t *testing.T) {
 	require := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
 
-	listener := snmpproxy.NewApiListener(newValidator(), &mockRequester{}, zap.NewNop().Sugar(), "localhost:80")
+	listener := snmpproxy.NewApiListener(newValidator(), &mockRequester{}, zap.NewNop().Sugar(), "localhost:80", 0)
 	err := listener.Start()
 	require.EqualError(err, "listen tcp 127.0.0.1:80: bind: permission denied")
 }

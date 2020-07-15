@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -17,10 +18,11 @@ import (
 )
 
 type ApiListener struct {
-	validator *RequestValidator
-	requester Requester
-	logger    *zap.SugaredLogger
-	server    *http.Server
+	validator         *RequestValidator
+	requester         Requester
+	logger            *zap.SugaredLogger
+	server            *http.Server
+	socketPermissions os.FileMode
 }
 
 func (l *ApiListener) Start() error {
@@ -31,6 +33,12 @@ func (l *ApiListener) Start() error {
 
 	if strings.HasSuffix(l.server.Addr, ".sock") {
 		ln, err = net.Listen("unix", l.server.Addr)
+		if err == nil && l.socketPermissions != 0 {
+			err = os.Chmod(l.server.Addr, l.socketPermissions)
+			if err != nil {
+				ln.Close()
+			}
+		}
 	} else {
 		ln, err = net.Listen("tcp", l.server.Addr)
 	}
@@ -126,14 +134,16 @@ func NewApiListener(
 	requester Requester,
 	logger *zap.SugaredLogger,
 	listen string,
+	socketPermissions os.FileMode,
 ) *ApiListener {
 	mux := http.NewServeMux()
 
 	listener := &ApiListener{
-		validator: validator,
-		requester: requester,
-		logger:    logger,
-		server:    &http.Server{Addr: listen, Handler: mux},
+		validator:         validator,
+		requester:         requester,
+		logger:            logger,
+		server:            &http.Server{Addr: listen, Handler: mux},
+		socketPermissions: socketPermissions,
 	}
 
 	metricOpts := prometheus.HistogramOpts{

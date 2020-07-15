@@ -36,7 +36,13 @@ func main() {
 	mibDataProvider := mib.NewDataProvider(displayHints)
 	requester := snmpproxy.NewGosnmpRequester(mibDataProvider)
 
-	apiListener := snmpproxy.NewApiListener(validator, requester, config.Logger, config.Api.Listen)
+	apiListener := snmpproxy.NewApiListener(
+		validator,
+		requester,
+		config.Logger,
+		config.Api.Listen,
+		config.Api.SocketPermissions,
+	)
 
 	err = apiListener.Start()
 	if err != nil {
