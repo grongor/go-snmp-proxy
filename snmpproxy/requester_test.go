@@ -360,6 +360,20 @@ func TestMultipleRequestsAllError(t *testing.T) {
 	require.Regexp(`(end of mib|no such instance): .1.7.9`, err.Error())
 }
 
+func TestWalkWithTimeout(t *testing.T) {
+	require := require.New(t)
+
+	apiRequest := apiRequest(walk(".1.15"))
+	apiRequest.Host = "8.8.8.8"
+	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
+	apiRequest.Timeout = time.Millisecond
+
+	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	result, err := requester.ExecuteRequest(apiRequest)
+	require.Nil(result)
+	require.EqualError(err, "timeout: .1.15")
+}
+
 func TestWalkWithNoSuchInstanceError(t *testing.T) {
 	require := require.New(t)
 
@@ -404,6 +418,20 @@ func TestWalkWithSnmpVersion1AndEndOfMibError(t *testing.T) {
 	result, err := requester.ExecuteRequest(apiRequest)
 	require.Nil(result)
 	require.EqualError(err, "end of mib: .1.15")
+}
+
+func TestGetWithTimeout(t *testing.T) {
+	require := require.New(t)
+
+	apiRequest := apiRequest(get([]string{".1.15"}))
+	apiRequest.Host = "8.8.8.8"
+	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
+	apiRequest.Timeout = time.Millisecond
+
+	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	result, err := requester.ExecuteRequest(apiRequest)
+	require.Nil(result)
+	require.EqualError(err, "timeout: .1.15")
 }
 
 func TestGetWithNoSuchInstanceError(t *testing.T) {
