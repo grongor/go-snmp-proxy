@@ -101,6 +101,10 @@ func (r *GosnmpRequester) executeGet(apiRequest *ApiRequest, requestNo int, resu
 
 	packet, err := getter(request.Oids)
 	if err != nil {
+		if strings.Contains(err.Error(), "timeout") {
+			err = fmt.Errorf("timeout: %s", strings.Join(request.Oids, ", "))
+		}
+
 		return
 	}
 
@@ -183,6 +187,10 @@ func (r *GosnmpRequester) executeWalk(apiRequest *ApiRequest, requestNo int, res
 		return nil
 	})
 	if err != nil {
+		if strings.Contains(err.Error(), "timeout") {
+			err = fmt.Errorf("timeout: %s", oid)
+		}
+
 		return
 	}
 
@@ -192,6 +200,10 @@ func (r *GosnmpRequester) executeWalk(apiRequest *ApiRequest, requestNo int, res
 
 	packet, err := snmp.GetNext([]string{oid})
 	if err != nil {
+		if strings.Contains(err.Error(), "timeout") {
+			err = fmt.Errorf("timeout: %s", oid)
+		}
+
 		return
 	}
 
