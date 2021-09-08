@@ -501,7 +501,7 @@ func TestGetWithSnmpError(t *testing.T) {
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.Error(err)
-	assert.Contains(err.Error(), "read: connection refused")
+	assert.Contains(err.Error(), "connection refused")
 }
 
 func TestWalkWithSnmpError(t *testing.T) {
@@ -514,7 +514,7 @@ func TestWalkWithSnmpError(t *testing.T) {
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.Error(err)
-	assert.Contains(err.Error(), "read: connection refused")
+	assert.Contains(err.Error(), "connection refused")
 }
 
 func TestInvalidHost(t *testing.T) {
