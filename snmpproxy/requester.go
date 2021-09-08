@@ -9,7 +9,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/gosnmp/gosnmp"
-
 	"github.com/grongor/go-snmp-proxy/snmpproxy/mib"
 )
 
@@ -34,7 +33,7 @@ func (r *GosnmpRequester) ExecuteRequest(apiRequest *ApiRequest) ([][]interface{
 		switch request.RequestType {
 		case Get, GetNext:
 			go r.executeGet(apiRequest, requestNo, resultsChan)
-		default:
+		case Walk:
 			go r.executeWalk(apiRequest, requestNo, resultsChan)
 		}
 	}
@@ -65,8 +64,7 @@ func (r *GosnmpRequester) ExecuteRequest(apiRequest *ApiRequest) ([][]interface{
 		close(errChan)
 	}()
 
-	err := <-errChan
-	if err != nil {
+	if err := <-errChan; err != nil {
 		return nil, err
 	}
 
@@ -108,6 +106,10 @@ func (r *GosnmpRequester) executeGet(apiRequest *ApiRequest, requestNo int, resu
 		return
 	}
 
+	result.result, err = r.processGetPacket(packet, request)
+}
+
+func (r *GosnmpRequester) processGetPacket(packet *gosnmp.SnmpPacket, request Request) ([]interface{}, error) {
 	if packet.Error == gosnmp.NoSuchName {
 		var oidsString string
 
@@ -118,37 +120,31 @@ func (r *GosnmpRequester) executeGet(apiRequest *ApiRequest, requestNo int, resu
 		}
 
 		if request.RequestType == Get {
-			err = fmt.Errorf("no such instance: %s", oidsString)
-		} else {
-			err = fmt.Errorf("end of mib: %s", oidsString)
+			return nil, fmt.Errorf("no such instance: %s", oidsString)
 		}
 
-		return
+		return nil, fmt.Errorf("end of mib: %s", oidsString)
 	}
 
-	result.result = make([]interface{}, 0, len(packet.Variables))
+	result := make([]interface{}, 0, len(packet.Variables)*2)
 
 	for _, dataUnit := range packet.Variables {
 		if dataUnit.Type == gosnmp.NoSuchObject {
-			err = fmt.Errorf("no such object: %s", dataUnit.Name)
-
-			return
+			return result, fmt.Errorf("no such object: %s", dataUnit.Name)
 		}
 
 		if dataUnit.Type == gosnmp.NoSuchInstance {
-			err = fmt.Errorf("no such instance: %s", dataUnit.Name)
-
-			return
+			return result, fmt.Errorf("no such instance: %s", dataUnit.Name)
 		}
 
 		if dataUnit.Type == gosnmp.EndOfMibView {
-			err = fmt.Errorf("end of mib: %s", dataUnit.Name)
-
-			return
+			return result, fmt.Errorf("end of mib: %s", dataUnit.Name)
 		}
 
-		result.result = append(result.result, dataUnit.Name, r.getPduValue(dataUnit))
+		result = append(result, dataUnit.Name, r.getPduValue(dataUnit))
 	}
+
+	return result, nil
 }
 
 func (r *GosnmpRequester) executeWalk(apiRequest *ApiRequest, requestNo int, resultChan chan<- requestResult) {
@@ -198,31 +194,31 @@ func (r *GosnmpRequester) executeWalk(apiRequest *ApiRequest, requestNo int, res
 		return
 	}
 
+	err = r.getWalkFailureReason(snmp, oid)
+}
+
+func (*GosnmpRequester) getWalkFailureReason(snmp gosnmp.Handler, oid string) error {
 	packet, err := snmp.GetNext([]string{oid})
 	if err != nil {
 		if strings.Contains(err.Error(), "timeout") {
-			err = fmt.Errorf("timeout: %s", oid)
+			return fmt.Errorf("timeout: %s", oid)
 		}
 
-		return
+		return err
 	}
 
 	if len(packet.Variables) != 1 || packet.Variables[0].Type == gosnmp.NoSuchObject {
-		err = fmt.Errorf("no such object: %s", oid)
-
-		return
+		return fmt.Errorf("no such object: %s", oid)
 	}
 
 	if packet.Variables[0].Type != gosnmp.EndOfMibView && packet.Variables[0].Type != gosnmp.Null {
-		err = fmt.Errorf("no such instance: %s", oid)
-
-		return
+		return fmt.Errorf("no such instance: %s", oid)
 	}
 
-	err = fmt.Errorf("end of mib: %s", oid)
+	return fmt.Errorf("end of mib: %s", oid)
 }
 
-func (r *GosnmpRequester) createSnmpHandler(apiRequest *ApiRequest) (gosnmp.Handler, error) {
+func (*GosnmpRequester) createSnmpHandler(apiRequest *ApiRequest) (gosnmp.Handler, error) {
 	snmp := gosnmp.NewHandler()
 
 	hostAndPort := strings.Split(apiRequest.Host, ":")
@@ -247,8 +243,7 @@ func (r *GosnmpRequester) createSnmpHandler(apiRequest *ApiRequest) (gosnmp.Hand
 	snmp.SetExponentialTimeout(false)
 	snmp.SetRetries(int(apiRequest.Retries))
 
-	err := snmp.Connect()
-	if err != nil {
+	if err := snmp.Connect(); err != nil {
 		return nil, err
 	}
 
@@ -256,7 +251,7 @@ func (r *GosnmpRequester) createSnmpHandler(apiRequest *ApiRequest) (gosnmp.Hand
 }
 
 func (r *GosnmpRequester) getPduValue(dataUnit gosnmp.SnmpPDU) interface{} {
-	switch dataUnit.Type {
+	switch dataUnit.Type { //nolint:exhaustive // We only care about gosnmp.OctetString, the rest is just passed along
 	case gosnmp.OctetString:
 		displayHint := r.mibDataProvider.GetDisplayHint(dataUnit.Name)
 		if displayHint == mib.DisplayHintString ||
@@ -271,7 +266,7 @@ func (r *GosnmpRequester) getPduValue(dataUnit gosnmp.SnmpPDU) interface{} {
 	}
 }
 
-func (r *GosnmpRequester) isStringPrintable(value []byte) bool {
+func (*GosnmpRequester) isStringPrintable(value []byte) bool {
 	if !utf8.Valid(value) {
 		return false
 	}

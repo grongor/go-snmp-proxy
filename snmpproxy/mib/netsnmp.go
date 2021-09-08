@@ -35,7 +35,7 @@ func (p *NetsnmpMibParser) Parse() (DisplayHints, error) {
 	// Redirect stderr to a pipe to catch netsnmp errors
 	r, w, err := os.Pipe()
 	if err != nil {
-		return nil, fmt.Errorf("error creating pipe: %s", err)
+		return nil, fmt.Errorf("error creating pipe: %w", err)
 	}
 	defer r.Close()
 	defer w.Close()
@@ -63,7 +63,8 @@ func (p *NetsnmpMibParser) Parse() (DisplayHints, error) {
 	go func() {
 		data, err := ioutil.ReadAll(r)
 		if err != nil {
-			errChan <- fmt.Errorf("error reading from pipe: %s", err)
+			errChan <- fmt.Errorf("error reading from pipe: %w", err)
+
 			return
 		}
 

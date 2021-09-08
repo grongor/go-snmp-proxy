@@ -3,9 +3,8 @@ package mib_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grongor/go-snmp-proxy/snmpproxy/mib"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMibDataProvider_GetStringType(t *testing.T) {

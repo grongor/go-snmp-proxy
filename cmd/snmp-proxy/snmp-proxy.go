@@ -5,12 +5,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/grongor/panicwatch"
-	"go.uber.org/zap"
-
 	"github.com/grongor/go-snmp-proxy/metrics"
 	"github.com/grongor/go-snmp-proxy/snmpproxy"
 	"github.com/grongor/go-snmp-proxy/snmpproxy/mib"
+	"github.com/grongor/panicwatch"
+	"go.uber.org/zap"
 )
 
 func main() {

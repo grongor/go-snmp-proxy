@@ -13,12 +13,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grongor/go-snmp-proxy/snmpproxy"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-
-	"github.com/grongor/go-snmp-proxy/snmpproxy"
 )
 
 type mockRequester struct {
@@ -36,8 +35,7 @@ func (r *mockRequester) ExecuteRequest(apiRequest *snmpproxy.ApiRequest) ([][]in
 	return result.([][]interface{}), args.Error(1)
 }
 
-type errReader struct {
-}
+type errReader struct{}
 
 func (errReader) Read(_ []byte) (n int, err error) {
 	return 0, errors.New("test error")
@@ -55,7 +53,7 @@ const getRequestBody = `
 `
 
 func TestListenerErrorNotPost(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
 
@@ -69,11 +67,11 @@ func TestListenerErrorNotPost(t *testing.T) {
 	listener.ServeHTTP(recorder, request)
 
 	response := recorder.Result()
-	require.Equal(http.StatusMethodNotAllowed, response.StatusCode)
+	assert.Equal(http.StatusMethodNotAllowed, response.StatusCode)
 }
 
 func TestListenerErrorReadingRequest(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
 
@@ -87,8 +85,8 @@ func TestListenerErrorReadingRequest(t *testing.T) {
 	listener.ServeHTTP(recorder, request)
 
 	response := recorder.Result()
-	require.Equal(http.StatusBadRequest, response.StatusCode)
-	require.Equal(`{"error":"test error"}`, read(response.Body))
+	assert.Equal(http.StatusBadRequest, response.StatusCode)
+	assert.Equal(`{"error":"test error"}`, read(response.Body))
 }
 
 func TestListenerErrorUnmarshalingRequest(t *testing.T) {
@@ -110,7 +108,7 @@ func TestListenerErrorUnmarshalingRequest(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			require := require.New(t)
+			assert := require.New(t)
 
 			prometheus.DefaultRegisterer = prometheus.NewRegistry()
 
@@ -125,14 +123,14 @@ func TestListenerErrorUnmarshalingRequest(t *testing.T) {
 			listener.ServeHTTP(recorder, request)
 
 			response := recorder.Result()
-			require.Equal(http.StatusBadRequest, response.StatusCode)
-			require.Equal(test.err, read(response.Body))
+			assert.Equal(http.StatusBadRequest, response.StatusCode)
+			assert.Equal(test.err, read(response.Body))
 		})
 	}
 }
 
 func TestListenerErrorRequestValidatorError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
 
@@ -158,12 +156,12 @@ func TestListenerErrorRequestValidatorError(t *testing.T) {
 
 	response := recorder.Result()
 
-	require.Equal(http.StatusBadRequest, response.StatusCode)
-	require.Equal(`{"error":"maximum allowed timeout is 10 seconds, got 100 seconds"}`, read(response.Body))
+	assert.Equal(http.StatusBadRequest, response.StatusCode)
+	assert.Equal(`{"error":"maximum allowed timeout is 10 seconds, got 100 seconds"}`, read(response.Body))
 }
 
 func TestListenerErrorRequesterError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
 
@@ -181,12 +179,12 @@ func TestListenerErrorRequesterError(t *testing.T) {
 
 	response := recorder.Result()
 
-	require.Equal(http.StatusInternalServerError, response.StatusCode)
-	require.Equal(`{"error":"some error"}`, read(response.Body))
+	assert.Equal(http.StatusInternalServerError, response.StatusCode)
+	assert.Equal(`{"error":"some error"}`, read(response.Body))
 }
 
 func TestListenerNoError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
 
@@ -204,12 +202,12 @@ func TestListenerNoError(t *testing.T) {
 
 	response := recorder.Result()
 
-	require.Equal(http.StatusOK, response.StatusCode)
-	require.Equal(`{"result":[[".1.2.3",123]]}`, read(response.Body))
+	assert.Equal(http.StatusOK, response.StatusCode)
+	assert.Equal(`{"result":[[".1.2.3",123]]}`, read(response.Body))
 }
 
 func TestStartAndClose(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
 
@@ -224,19 +222,19 @@ func TestStartAndClose(t *testing.T) {
 	time.Sleep(time.Millisecond * 10)
 
 	response, err := http.Post("http://localhost:15721/snmp-proxy", "", strings.NewReader(getRequestBody))
-	require.NoError(err)
-	require.Equal(http.StatusOK, response.StatusCode)
-	require.Equal(`{"result":[[".1.2.3",123]]}`, read(response.Body))
+	assert.NoError(err)
+	assert.Equal(http.StatusOK, response.StatusCode)
+	assert.Equal(`{"result":[[".1.2.3",123]]}`, read(response.Body))
 
 	listener.Close()
 
 	response, err = http.Post("http://localhost:15721/snmp-proxy", "", strings.NewReader(getRequestBody))
-	require.Nil(response)
-	require.Error(err)
+	assert.Nil(response)
+	assert.Error(err)
 }
 
 func TestStartAndCloseOnSocket(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
 
@@ -246,13 +244,13 @@ func TestStartAndCloseOnSocket(t *testing.T) {
 	requester.On("ExecuteRequest", mock.Anything).Once().Return([][]interface{}{{".1.2.3", 123}}, nil)
 
 	f, err := ioutil.TempFile("", "snmp-proxy-test-*.sock")
-	require.NoError(err)
-	require.NoError(f.Close())
-	require.NoError(os.Remove(f.Name()))
+	assert.NoError(err)
+	assert.NoError(f.Close())
+	assert.NoError(os.Remove(f.Name()))
 
 	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), f.Name(), 0)
 	err = listener.Start()
-	require.NoError(err)
+	assert.NoError(err)
 
 	time.Sleep(time.Millisecond * 10)
 
@@ -265,48 +263,48 @@ func TestStartAndCloseOnSocket(t *testing.T) {
 	}
 
 	response, err := client.Post("http://socket/snmp-proxy", "", strings.NewReader(getRequestBody))
-	require.NoError(err)
-	require.Equal(http.StatusOK, response.StatusCode)
-	require.Equal(`{"result":[[".1.2.3",123]]}`, read(response.Body))
+	assert.NoError(err)
+	assert.Equal(http.StatusOK, response.StatusCode)
+	assert.Equal(`{"result":[[".1.2.3",123]]}`, read(response.Body))
 
 	listener.Close()
 
 	response, err = client.Post("http://socket/snmp-proxy", "", strings.NewReader(getRequestBody))
-	require.Nil(response)
-	require.Error(err)
+	assert.Nil(response)
+	assert.Error(err)
 }
 
 func TestStartSocketWithCorrectPermissions(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
 
 	requester := &mockRequester{}
 
 	f, err := ioutil.TempFile("", "snmp-proxy-test-*.sock")
-	require.NoError(err)
-	require.NoError(f.Close())
-	require.NoError(os.Remove(f.Name()))
+	assert.NoError(err)
+	assert.NoError(f.Close())
+	assert.NoError(os.Remove(f.Name()))
 
-	expectedMode := os.FileMode(0124)
+	expectedMode := os.FileMode(0o124)
 
 	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), f.Name(), expectedMode)
 	err = listener.Start()
-	require.NoError(err)
+	assert.NoError(err)
 
 	stat, err := os.Stat(f.Name())
-	require.NoError(err)
-	require.Equal(expectedMode, stat.Mode().Perm())
+	assert.NoError(err)
+	assert.Equal(expectedMode, stat.Mode().Perm())
 }
 
 func TestStartError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	prometheus.DefaultRegisterer = prometheus.NewRegistry()
 
 	listener := snmpproxy.NewApiListener(newValidator(), &mockRequester{}, zap.NewNop().Sugar(), "localhost:80", 0)
 	err := listener.Start()
-	require.EqualError(err, "listen tcp 127.0.0.1:80: bind: permission denied")
+	assert.EqualError(err, "listen tcp 127.0.0.1:80: bind: permission denied")
 }
 
 func read(r io.Reader) string {

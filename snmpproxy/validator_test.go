@@ -4,9 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grongor/go-snmp-proxy/snmpproxy"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidate(t *testing.T) {
@@ -73,6 +72,17 @@ func TestValidate(t *testing.T) {
 			name:    "no requests",
 			request: &snmpproxy.ApiRequest{},
 			err:     "at least one Request must be provided",
+		},
+		{
+			name: "unexpected request type",
+			request: &snmpproxy.ApiRequest{
+				Requests: []snmpproxy.Request{
+					{
+						RequestType: snmpproxy.RequestType("wow"),
+					},
+				},
+			},
+			err: "request[0]: unexpected RequestType: wow",
 		},
 		{
 			name: "missing oids",

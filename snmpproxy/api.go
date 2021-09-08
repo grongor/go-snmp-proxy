@@ -67,7 +67,7 @@ func (l *ApiListener) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 	}
 
 	apiRequest := &ApiRequest{}
-	var response = Response{}
+	response := Response{}
 
 	defer func() {
 		_, _ = writer.Write(response.Bytes())
@@ -123,8 +123,7 @@ func (l *ApiListener) Close() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	err := l.server.Shutdown(ctx)
-	if errors.Is(err, ctx.Err()) {
+	if err := l.server.Shutdown(ctx); errors.Is(err, ctx.Err()) {
 		l.server.Close()
 	}
 }

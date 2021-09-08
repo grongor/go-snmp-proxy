@@ -11,7 +11,7 @@ type RequestValidator struct {
 	maxRetries uint8
 }
 
-func (v *RequestValidator) Validate(apiRequest *ApiRequest) error {
+func (v *RequestValidator) Validate(apiRequest *ApiRequest) error { //nolint:cyclop // No need to split this
 	if apiRequest.Timeout > v.maxTimeout {
 		return fmt.Errorf(
 			"maximum allowed timeout is %d seconds, got %d seconds",
@@ -29,6 +29,12 @@ func (v *RequestValidator) Validate(apiRequest *ApiRequest) error {
 	}
 
 	for i, request := range apiRequest.Requests {
+		switch request.RequestType {
+		case Get, GetNext, Walk:
+		default:
+			return fmt.Errorf("request[%d]: unexpected RequestType: %s", i, request.RequestType)
+		}
+
 		if len(request.Oids) == 0 {
 			return fmt.Errorf("request[%d]: at least one OID must be provided", i)
 		}
