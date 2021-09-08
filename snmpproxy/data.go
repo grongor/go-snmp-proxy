@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/soniah/gosnmp"
+	"github.com/gosnmp/gosnmp"
 )
 
 type RequestType string
@@ -60,7 +60,7 @@ func (v *SnmpVersion) UnmarshalJSON(data []byte) error {
 type Request struct {
 	RequestType    RequestType `json:"request_type"`
 	Oids           []string    `json:"oids"`
-	MaxRepetitions uint8       `json:"max_repetitions"`
+	MaxRepetitions uint32      `json:"max_repetitions"`
 }
 
 func (r *Request) UnmarshalJSON(data []byte) error {
