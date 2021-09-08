@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/soniah/gosnmp"
+	"github.com/gosnmp/gosnmp"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grongor/go-snmp-proxy/snmpproxy"
