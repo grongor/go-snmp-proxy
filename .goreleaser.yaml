@@ -38,7 +38,7 @@ builds:
         goos:
             - linux
             - darwin
-#            - windows # todo need to figure out how to deal with panicwatch
+            - windows
         goarch:
             - amd64
 
