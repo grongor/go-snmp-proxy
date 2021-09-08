@@ -5,9 +5,8 @@ import (
 	"time"
 
 	"github.com/gosnmp/gosnmp"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grongor/go-snmp-proxy/snmpproxy"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUnmarshalRequestType(t *testing.T) {
@@ -65,7 +64,8 @@ func TestUnmarshalSnmpVersion(t *testing.T) {
 			name:     "invalid",
 			raw:      []byte("\"whatever\""),
 			expected: 0,
-			err:      "unknown or unsupported snmpVersion \"whatever\", supported are: 1, 2c"},
+			err:      "unknown or unsupported snmpVersion \"whatever\", supported are: 1, 2c",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

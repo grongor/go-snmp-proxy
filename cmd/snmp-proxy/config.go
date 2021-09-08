@@ -59,8 +59,8 @@ func (c *Configuration) setupLogger() {
 
 func (c *Configuration) setupSentryLogging(logger *zap.Logger) *zap.Logger {
 	cfg := zapsentry.Configuration{Level: zapcore.WarnLevel}
-	core, err := zapsentry.NewCore(cfg, zapsentry.NewSentryClientFromDSN(c.Common.Sentry.Dsn))
 
+	core, err := zapsentry.NewCore(cfg, zapsentry.NewSentryClientFromDSN(c.Common.Sentry.Dsn))
 	if err != nil {
 		logger.Fatal("failed to initialize zapsentry core", zap.Error(err))
 	}

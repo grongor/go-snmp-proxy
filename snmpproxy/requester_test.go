@@ -12,10 +12,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/gosnmp/gosnmp"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grongor/go-snmp-proxy/snmpproxy"
 	"github.com/grongor/go-snmp-proxy/snmpproxy/mib"
+	"github.com/stretchr/testify/require"
 )
 
 type syncBuffer struct {
@@ -79,15 +78,15 @@ func TestMain(m *testing.M) {
 }
 
 func TestGet(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(get([]string{".1.3.6.1.2.1.25.2.3.1.2.1", ".1.3.6.1.2.1.25.2.3.1.2.4"}))
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.NoError(err)
+	assert.NoError(err)
 
-	require.Equal(
+	assert.Equal(
 		[][]interface{}{
 			{
 				".1.3.6.1.2.1.25.2.3.1.2.1", ".1.3.6.1.2.1.25.2.1.2",
@@ -99,62 +98,62 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetStringDisplayHintGuessedString(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(get([]string{".1.3.6.1.2.1.2.2.1.2.48"}))
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.NoError(err)
+	assert.NoError(err)
 
-	require.Equal(
+	assert.Equal(
 		[][]interface{}{{".1.3.6.1.2.1.2.2.1.2.48", "Ethernet48"}},
 		result,
 	)
 }
 
 func TestGetStringDisplayHintGuessedHexadecimalBecauseNotUtf8Valid(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(get([]string{".1.3.6.1.2.1.4.22.1.2.2000955.185.152.67.97"}))
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.NoError(err)
+	assert.NoError(err)
 
-	require.Equal(
+	assert.Equal(
 		[][]interface{}{{".1.3.6.1.2.1.4.22.1.2.2000955.185.152.67.97", "91 E2 BA E3 5A 61"}},
 		result,
 	)
 }
 
 func TestGetStringDisplayHintGuessedHexadecimalBecauseNotPrintable(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(get([]string{".1.3.6.1.2.1.4.22.1.2.2000955.185.152.67.100"}))
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.NoError(err)
+	assert.NoError(err)
 
-	require.True(utf8.Valid([]byte{}))
+	assert.True(utf8.Valid([]byte{}))
 
-	require.Equal(
+	assert.Equal(
 		[][]interface{}{{".1.3.6.1.2.1.4.22.1.2.2000955.185.152.67.100", "53 54 00 4C 5A 5D"}},
 		result,
 	)
 }
 
 func TestGetNext(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(getNext([]string{".1.3.6.1.2.1.25.2.3.1.2", ".1.3.6.1.2.1.25.2.3.1.2.3"}))
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.NoError(err)
+	assert.NoError(err)
 
-	require.Equal(
+	assert.Equal(
 		[][]interface{}{
 			{
 				".1.3.6.1.2.1.25.2.3.1.2.1", ".1.3.6.1.2.1.25.2.1.2",
@@ -166,15 +165,15 @@ func TestGetNext(t *testing.T) {
 }
 
 func TestWalk(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(walk(".1.3.6.1.2.1.31.1.1.1.15"))
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.NoError(err)
+	assert.NoError(err)
 
-	require.Equal(
+	assert.Equal(
 		[][]interface{}{
 			{
 				".1.3.6.1.2.1.31.1.1.1.15.1000001", uint(100000),
@@ -187,16 +186,16 @@ func TestWalk(t *testing.T) {
 }
 
 func TestWalkWithSnmpVersion1(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(walk(".1.3.6.1.2.1.31.1.1.1.15"))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.NoError(err)
+	assert.NoError(err)
 
-	require.Equal(
+	assert.Equal(
 		[][]interface{}{
 			{
 				".1.3.6.1.2.1.31.1.1.1.15.1000001", uint(100000),
@@ -209,7 +208,7 @@ func TestWalkWithSnmpVersion1(t *testing.T) {
 }
 
 func TestWalkWholeTree(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(walk(".1.3"))
 
@@ -220,9 +219,9 @@ func TestWalkWholeTree(t *testing.T) {
 
 	requester := snmpproxy.NewGosnmpRequester(mibDataProvider)
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.NoError(err)
+	assert.NoError(err)
 
-	require.Equal(
+	assert.Equal(
 		[][]interface{}{
 			{
 				".1.3.6.1.2.1.1.1.0",
@@ -274,20 +273,20 @@ Compiled Thu 21-Jul-11 02:22 by prod_rel_team`,
 }
 
 func TestWalkLastMibElement(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(walk(".1.7"))
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.NoError(err)
+	assert.NoError(err)
 
-	require.Equal([][]interface{}{{".1.7.8.9", "Don't know what I'm"}}, result)
+	assert.Equal([][]interface{}{{".1.7.8.9", "Don't know what I'm"}}, result)
 }
 
 func TestWalkLastMibElementAndSnmpVersion1(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(walk(".1.7"))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
@@ -295,13 +294,13 @@ func TestWalkLastMibElementAndSnmpVersion1(t *testing.T) {
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.NoError(err)
+	assert.NoError(err)
 
-	require.Equal([][]interface{}{{".1.7.8.9", "Don't know what I'm"}}, result)
+	assert.Equal([][]interface{}{{".1.7.8.9", "Don't know what I'm"}}, result)
 }
 
 func TestMultipleRequests(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(
 		get([]string{".1.3.6.1.2.1.1.3.0"}),
@@ -312,9 +311,9 @@ func TestMultipleRequests(t *testing.T) {
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.NoError(err)
+	assert.NoError(err)
 
-	require.Equal(
+	assert.Equal(
 		[][]interface{}{
 			{".1.3.6.1.2.1.1.3.0", uint32(293718542)},
 			{".1.7.8.9", "Don't know what I'm"},
@@ -328,7 +327,7 @@ func TestMultipleRequests(t *testing.T) {
 }
 
 func TestMultipleRequestsWithSingleError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(
 		get([]string{".1.3.6.1.2.1.1.3.0"}),
@@ -339,12 +338,12 @@ func TestMultipleRequestsWithSingleError(t *testing.T) {
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.EqualError(err, "end of mib: .1.7.9")
+	assert.Nil(result)
+	assert.EqualError(err, "end of mib: .1.7.9")
 }
 
 func TestMultipleRequestsAllError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(
 		get([]string{".1.7.9"}),
@@ -355,13 +354,13 @@ func TestMultipleRequestsAllError(t *testing.T) {
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.Error(err)
-	require.Regexp(`(end of mib|no such instance): .1.7.9`, err.Error())
+	assert.Nil(result)
+	assert.Error(err)
+	assert.Regexp(`(end of mib|no such instance): .1.7.9`, err.Error())
 }
 
 func TestWalkWithTimeout(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(walk(".1.15"))
 	apiRequest.Host = "8.8.8.8"
@@ -370,58 +369,58 @@ func TestWalkWithTimeout(t *testing.T) {
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.EqualError(err, "timeout: .1.15")
+	assert.Nil(result)
+	assert.EqualError(err, "timeout: .1.15")
 }
 
 func TestWalkWithNoSuchInstanceError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(walk(".1.3.5"))
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.EqualError(err, "no such instance: .1.3.5")
+	assert.Nil(result)
+	assert.EqualError(err, "no such instance: .1.3.5")
 }
 
 func TestWalkWithSnmpVersion1AndNoSuchInstanceError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(walk(".1.3.5"))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.EqualError(err, "no such instance: .1.3.5")
+	assert.Nil(result)
+	assert.EqualError(err, "no such instance: .1.3.5")
 }
 
 func TestWalkWithEndOfMibError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(walk(".1.15"))
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.EqualError(err, "end of mib: .1.15")
+	assert.Nil(result)
+	assert.EqualError(err, "end of mib: .1.15")
 }
 
 func TestWalkWithSnmpVersion1AndEndOfMibError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(walk(".1.15"))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.EqualError(err, "end of mib: .1.15")
+	assert.Nil(result)
+	assert.EqualError(err, "end of mib: .1.15")
 }
 
 func TestGetWithTimeout(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(get([]string{".1.15"}))
 	apiRequest.Host = "8.8.8.8"
@@ -430,92 +429,92 @@ func TestGetWithTimeout(t *testing.T) {
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.EqualError(err, "timeout: .1.15")
+	assert.Nil(result)
+	assert.EqualError(err, "timeout: .1.15")
 }
 
 func TestGetWithNoSuchInstanceError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(get([]string{".1.3.5"}))
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.EqualError(err, "no such instance: .1.3.5")
+	assert.Nil(result)
+	assert.EqualError(err, "no such instance: .1.3.5")
 }
 
 func TestGetWithSnmpVersion1AndNoSuchInstanceError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(get([]string{".1.3.5"}))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.EqualError(err, "no such instance: .1.3.5")
+	assert.Nil(result)
+	assert.EqualError(err, "no such instance: .1.3.5")
 }
 
 func TestGetWithMultipleOidsAndSnmpVersion1AndNoSuchInstanceError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(get([]string{".1.3.5", "1.3.2"}))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.EqualError(err, "no such instance: one of .1.3.5 1.3.2")
+	assert.Nil(result)
+	assert.EqualError(err, "no such instance: one of .1.3.5 1.3.2")
 }
 
 func TestGetNextWithEndOfMib(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(getNext([]string{".1.15"}))
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.EqualError(err, "end of mib: .1.15")
+	assert.Nil(result)
+	assert.EqualError(err, "end of mib: .1.15")
 }
 
 func TestGetNextWithSnmpVersion1AndEndOfMib(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(getNext([]string{".1.15"}))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.EqualError(err, "end of mib: .1.15")
+	assert.Nil(result)
+	assert.EqualError(err, "end of mib: .1.15")
 }
 
 func TestGetWithSnmpError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(get([]string{".1.1"}))
 	apiRequest.Host = "localhost"
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.Error(err)
-	require.Contains(err.Error(), "read: connection refused")
+	assert.Nil(result)
+	assert.Error(err)
+	assert.Contains(err.Error(), "read: connection refused")
 }
 
 func TestWalkWithSnmpError(t *testing.T) {
-	require := require.New(t)
+	assert := require.New(t)
 
 	apiRequest := apiRequest(walk(""))
 	apiRequest.Host = "localhost"
 
 	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 	result, err := requester.ExecuteRequest(apiRequest)
-	require.Nil(result)
-	require.Error(err)
-	require.Contains(err.Error(), "read: connection refused")
+	assert.Nil(result)
+	assert.Error(err)
+	assert.Contains(err.Error(), "read: connection refused")
 }
 
 func TestInvalidHost(t *testing.T) {
@@ -543,16 +542,16 @@ func TestInvalidHost(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			require := require.New(t)
+			assert := require.New(t)
 
 			apiRequest := apiRequest(get([]string{}), walk(""))
 			apiRequest.Host = test.host
 
 			requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
 			result, err := requester.ExecuteRequest(apiRequest)
-			require.Nil(result)
-			require.Error(err)
-			require.Contains(err.Error(), test.err)
+			assert.Nil(result)
+			assert.Error(err)
+			assert.Contains(err.Error(), test.err)
 		})
 	}
 }
