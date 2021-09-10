@@ -4,9 +4,7 @@ export GOBIN = $(BIN)
 
 .PHONY: build
 build:
-	for CMD in `ls cmd`; do \
-		go build ./cmd/$$CMD; \
-	done
+	go build ./cmd/...
 
 .PHONY: check
 check: lint test
