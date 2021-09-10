@@ -12,13 +12,13 @@ import "C"
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 )
 
 // This parser was inspired by https://github.com/prometheus/snmp_exporter/tree/master/generator
@@ -28,7 +28,10 @@ type NetsnmpMibParser struct {
 }
 
 func (p *NetsnmpMibParser) Parse() (DisplayHints, error) {
-	os.Setenv("MIBS", "ALL")
+	err := os.Setenv("MIBS", "ALL")
+	if err != nil {
+		return nil, fmt.Errorf("failed to set ENV variable: %w", err)
+	}
 
 	p.logger.Infow("loading MIB files", "source", C.GoString(C.netsnmp_get_mib_directory()))
 
@@ -40,19 +43,12 @@ func (p *NetsnmpMibParser) Parse() (DisplayHints, error) {
 	defer r.Close()
 	defer w.Close()
 
-	stderrFd := int(os.Stderr.Fd())
-
-	savedStderrFd, err := syscall.Dup(stderrFd)
+	originalStderrFd, err := unix.Dup(unix.Stderr)
 	if err != nil {
 		return nil, err
 	}
 
-	err = syscall.Close(2)
-	if err != nil {
-		return nil, err
-	}
-
-	err = syscall.Dup2(int(w.Fd()), stderrFd)
+	err = unix.Dup2(int(w.Fd()), unix.Stderr)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +57,7 @@ func (p *NetsnmpMibParser) Parse() (DisplayHints, error) {
 	errChan := make(chan error)
 
 	go func() {
-		data, err := ioutil.ReadAll(r)
+		data, err := io.ReadAll(r)
 		if err != nil {
 			errChan <- fmt.Errorf("error reading from pipe: %w", err)
 
@@ -77,9 +73,8 @@ func (p *NetsnmpMibParser) Parse() (DisplayHints, error) {
 
 	// Restore stderr
 	_ = w.Close()
-	_ = syscall.Close(stderrFd)
-	_ = syscall.Dup2(savedStderrFd, stderrFd)
-	_ = syscall.Close(savedStderrFd)
+	_ = unix.Dup2(originalStderrFd, unix.Stderr)
+	_ = unix.Close(originalStderrFd)
 
 	if err := <-errChan; err != nil {
 		return nil, err
