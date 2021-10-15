@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/gosnmp/gosnmp"
-	"github.com/grongor/go-snmp-proxy/snmpproxy/mib"
 )
 
 type requestResult struct {
@@ -23,7 +20,7 @@ type Requester interface {
 }
 
 type GosnmpRequester struct {
-	mibDataProvider *mib.DataProvider
+	valueFormatter *ValueFormatter
 }
 
 func (r *GosnmpRequester) ExecuteRequest(apiRequest *ApiRequest) ([][]interface{}, error) {
@@ -141,7 +138,7 @@ func (r *GosnmpRequester) processGetPacket(packet *gosnmp.SnmpPacket, request Re
 			return result, fmt.Errorf("end of mib: %s", dataUnit.Name)
 		}
 
-		result = append(result, dataUnit.Name, r.getPduValue(dataUnit))
+		result = append(result, dataUnit.Name, r.valueFormatter.Format(dataUnit))
 	}
 
 	return result, nil
@@ -178,7 +175,7 @@ func (r *GosnmpRequester) executeWalk(apiRequest *ApiRequest, requestNo int, res
 	oid := request.Oids[0]
 
 	err = walker(oid, func(dataUnit gosnmp.SnmpPDU) error {
-		result.result = append(result.result, dataUnit.Name, r.getPduValue(dataUnit))
+		result.result = append(result.result, dataUnit.Name, r.valueFormatter.Format(dataUnit))
 
 		return nil
 	})
@@ -250,38 +247,6 @@ func (*GosnmpRequester) createSnmpHandler(apiRequest *ApiRequest) (gosnmp.Handle
 	return snmp, nil
 }
 
-func (r *GosnmpRequester) getPduValue(dataUnit gosnmp.SnmpPDU) interface{} {
-	switch dataUnit.Type { //nolint:exhaustive // We only care about gosnmp.OctetString, the rest is just passed along
-	case gosnmp.OctetString:
-		displayHint := r.mibDataProvider.GetDisplayHint(dataUnit.Name)
-		if displayHint == mib.DisplayHintString ||
-			// best effort to display octet strings correctly without the MIBs
-			displayHint == mib.DisplayHintUnknown && r.isStringPrintable(dataUnit.Value.([]byte)) {
-			return string(dataUnit.Value.([]byte))
-		}
-
-		return fmt.Sprintf("% X", dataUnit.Value)
-	default:
-		return dataUnit.Value
-	}
-}
-
-func (*GosnmpRequester) isStringPrintable(value []byte) bool {
-	if !utf8.Valid(value) {
-		return false
-	}
-
-	for _, b := range value {
-		if unicode.IsPrint(rune(b)) || unicode.IsSpace(rune(b)) {
-			continue
-		}
-
-		return false
-	}
-
-	return true
-}
-
-func NewGosnmpRequester(mibDataProvider *mib.DataProvider) *GosnmpRequester {
-	return &GosnmpRequester{mibDataProvider: mibDataProvider}
+func NewGosnmpRequester(valueFormatter *ValueFormatter) *GosnmpRequester {
+	return &GosnmpRequester{valueFormatter: valueFormatter}
 }

@@ -42,6 +42,9 @@ linters:
         - wsl
 
 linters-settings:
+    exhaustive:
+        default-signifies-exhaustive: true
+
     goimports:
         local-prefixes: gitlab.cdn77.eu
 
