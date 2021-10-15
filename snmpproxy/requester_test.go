@@ -9,7 +9,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-	"unicode/utf8"
 
 	"github.com/gosnmp/gosnmp"
 	"github.com/grongor/go-snmp-proxy/snmpproxy"
@@ -82,7 +81,7 @@ func TestGet(t *testing.T) {
 
 	apiRequest := apiRequest(get([]string{".1.3.6.1.2.1.25.2.3.1.2.1", ".1.3.6.1.2.1.25.2.3.1.2.4"}))
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.NoError(err)
 
@@ -97,59 +96,12 @@ func TestGet(t *testing.T) {
 	)
 }
 
-func TestGetStringDisplayHintGuessedString(t *testing.T) {
-	assert := require.New(t)
-
-	apiRequest := apiRequest(get([]string{".1.3.6.1.2.1.2.2.1.2.48"}))
-
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
-	result, err := requester.ExecuteRequest(apiRequest)
-	assert.NoError(err)
-
-	assert.Equal(
-		[][]interface{}{{".1.3.6.1.2.1.2.2.1.2.48", "Ethernet48"}},
-		result,
-	)
-}
-
-func TestGetStringDisplayHintGuessedHexadecimalBecauseNotUtf8Valid(t *testing.T) {
-	assert := require.New(t)
-
-	apiRequest := apiRequest(get([]string{".1.3.6.1.2.1.4.22.1.2.2000955.185.152.67.97"}))
-
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
-	result, err := requester.ExecuteRequest(apiRequest)
-	assert.NoError(err)
-
-	assert.Equal(
-		[][]interface{}{{".1.3.6.1.2.1.4.22.1.2.2000955.185.152.67.97", "91 E2 BA E3 5A 61"}},
-		result,
-	)
-}
-
-func TestGetStringDisplayHintGuessedHexadecimalBecauseNotPrintable(t *testing.T) {
-	assert := require.New(t)
-
-	apiRequest := apiRequest(get([]string{".1.3.6.1.2.1.4.22.1.2.2000955.185.152.67.100"}))
-
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
-	result, err := requester.ExecuteRequest(apiRequest)
-	assert.NoError(err)
-
-	assert.True(utf8.Valid([]byte{}))
-
-	assert.Equal(
-		[][]interface{}{{".1.3.6.1.2.1.4.22.1.2.2000955.185.152.67.100", "53 54 00 4C 5A 5D"}},
-		result,
-	)
-}
-
 func TestGetNext(t *testing.T) {
 	assert := require.New(t)
 
 	apiRequest := apiRequest(getNext([]string{".1.3.6.1.2.1.25.2.3.1.2", ".1.3.6.1.2.1.25.2.3.1.2.3"}))
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.NoError(err)
 
@@ -169,7 +121,7 @@ func TestWalk(t *testing.T) {
 
 	apiRequest := apiRequest(walk(".1.3.6.1.2.1.31.1.1.1.15"))
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.NoError(err)
 
@@ -191,7 +143,7 @@ func TestWalkWithSnmpVersion1(t *testing.T) {
 	apiRequest := apiRequest(walk(".1.3.6.1.2.1.31.1.1.1.15"))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.NoError(err)
 
@@ -212,11 +164,14 @@ func TestWalkWholeTree(t *testing.T) {
 
 	apiRequest := apiRequest(walk(".1.3"))
 
-	mibDataProvider := mib.NewDataProvider(mib.DisplayHints{
-		".1.3.6.1.2.1.2.2.1.2":  mib.DisplayHintString,
-		".1.3.6.1.2.1.4.22.1.2": mib.DisplayHintHexadecimal,
-	})
-
+	mibDataProvider := snmpproxy.NewValueFormatter(
+		mib.NewDataProvider(
+			mib.DisplayHints{
+				".1.3.6.1.2.1.2.2.1.2":  mib.DisplayHintString,
+				".1.3.6.1.2.1.4.22.1.2": mib.DisplayHintHexadecimal,
+			},
+		),
+	)
 	requester := snmpproxy.NewGosnmpRequester(mibDataProvider)
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.NoError(err)
@@ -277,7 +232,7 @@ func TestWalkLastMibElement(t *testing.T) {
 
 	apiRequest := apiRequest(walk(".1.7"))
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.NoError(err)
@@ -291,7 +246,7 @@ func TestWalkLastMibElementAndSnmpVersion1(t *testing.T) {
 	apiRequest := apiRequest(walk(".1.7"))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.NoError(err)
@@ -308,7 +263,7 @@ func TestMultipleRequests(t *testing.T) {
 		getNext([]string{".1.3.6.1.2.1.2.2.1.14.9", ".1.3.6.1.2.1.2.2.1.14.10"}),
 	)
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.NoError(err)
@@ -335,7 +290,7 @@ func TestMultipleRequestsWithSingleError(t *testing.T) {
 		getNext([]string{".1.3.6.1.2.1.2.2.1.14.9", ".1.7.9"}),
 	)
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
@@ -351,7 +306,7 @@ func TestMultipleRequestsAllError(t *testing.T) {
 		getNext([]string{".1.3.6.1.2.1.2.2.1.14.9", ".1.7.9"}),
 	)
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
@@ -367,7 +322,7 @@ func TestWalkWithTimeout(t *testing.T) {
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 	apiRequest.Timeout = time.Millisecond
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.EqualError(err, "timeout: .1.15")
@@ -378,7 +333,7 @@ func TestWalkWithNoSuchInstanceError(t *testing.T) {
 
 	apiRequest := apiRequest(walk(".1.3.5"))
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.EqualError(err, "no such instance: .1.3.5")
@@ -390,7 +345,7 @@ func TestWalkWithSnmpVersion1AndNoSuchInstanceError(t *testing.T) {
 	apiRequest := apiRequest(walk(".1.3.5"))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.EqualError(err, "no such instance: .1.3.5")
@@ -401,7 +356,7 @@ func TestWalkWithEndOfMibError(t *testing.T) {
 
 	apiRequest := apiRequest(walk(".1.15"))
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.EqualError(err, "end of mib: .1.15")
@@ -413,7 +368,7 @@ func TestWalkWithSnmpVersion1AndEndOfMibError(t *testing.T) {
 	apiRequest := apiRequest(walk(".1.15"))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.EqualError(err, "end of mib: .1.15")
@@ -427,7 +382,7 @@ func TestGetWithTimeout(t *testing.T) {
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 	apiRequest.Timeout = time.Millisecond
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.EqualError(err, "timeout: .1.15")
@@ -438,7 +393,7 @@ func TestGetWithNoSuchInstanceError(t *testing.T) {
 
 	apiRequest := apiRequest(get([]string{".1.3.5"}))
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.EqualError(err, "no such instance: .1.3.5")
@@ -450,7 +405,7 @@ func TestGetWithSnmpVersion1AndNoSuchInstanceError(t *testing.T) {
 	apiRequest := apiRequest(get([]string{".1.3.5"}))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.EqualError(err, "no such instance: .1.3.5")
@@ -462,7 +417,7 @@ func TestGetWithMultipleOidsAndSnmpVersion1AndNoSuchInstanceError(t *testing.T) 
 	apiRequest := apiRequest(get([]string{".1.3.5", "1.3.2"}))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.EqualError(err, "no such instance: one of .1.3.5 1.3.2")
@@ -473,7 +428,7 @@ func TestGetNextWithEndOfMib(t *testing.T) {
 
 	apiRequest := apiRequest(getNext([]string{".1.15"}))
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.EqualError(err, "end of mib: .1.15")
@@ -485,7 +440,7 @@ func TestGetNextWithSnmpVersion1AndEndOfMib(t *testing.T) {
 	apiRequest := apiRequest(getNext([]string{".1.15"}))
 	apiRequest.Version = snmpproxy.SnmpVersion(gosnmp.Version1)
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.EqualError(err, "end of mib: .1.15")
@@ -497,7 +452,7 @@ func TestGetWithSnmpError(t *testing.T) {
 	apiRequest := apiRequest(get([]string{".1.1"}))
 	apiRequest.Host = "localhost"
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.Error(err)
@@ -510,7 +465,7 @@ func TestWalkWithSnmpError(t *testing.T) {
 	apiRequest := apiRequest(walk(""))
 	apiRequest.Host = "localhost"
 
-	requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.Nil(result)
 	assert.Error(err)
@@ -547,7 +502,7 @@ func TestInvalidHost(t *testing.T) {
 			apiRequest := apiRequest(get([]string{}), walk(""))
 			apiRequest.Host = test.host
 
-			requester := snmpproxy.NewGosnmpRequester(mib.NewDataProvider(nil))
+			requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
 			result, err := requester.ExecuteRequest(apiRequest)
 			assert.Nil(result)
 			assert.Error(err)

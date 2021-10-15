@@ -109,6 +109,8 @@ func (p *NetsnmpMibParser) findStringTypesDisplayHints(displayHints DisplayHints
 			displayHints[oid] = DisplayHintString
 		case "PhysAddress":
 			displayHints[oid] = DisplayHintHexadecimal
+		case "DateAndTime":
+			displayHints[oid] = DisplayHintDateAndTime
 		}
 
 		return

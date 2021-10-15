@@ -32,8 +32,7 @@ func main() {
 		config.Logger.Fatalw("mib parser error: ", zap.Error(err))
 	}
 
-	mibDataProvider := mib.NewDataProvider(displayHints)
-	requester := snmpproxy.NewGosnmpRequester(mibDataProvider)
+	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(displayHints)))
 
 	apiListener := snmpproxy.NewApiListener(
 		validator,

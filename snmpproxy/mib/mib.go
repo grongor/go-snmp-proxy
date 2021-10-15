@@ -10,6 +10,7 @@ const (
 	DisplayHintUnknown = DisplayHint(iota)
 	DisplayHintString
 	DisplayHintHexadecimal
+	DisplayHintDateAndTime
 )
 
 type DisplayHints map[string]DisplayHint
