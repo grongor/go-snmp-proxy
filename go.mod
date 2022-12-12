@@ -4,11 +4,11 @@ go 1.18
 
 require (
 	github.com/TheZeroSlave/zapsentry v1.12.0
-	github.com/gosnmp/gosnmp v1.32.0
+	github.com/gosnmp/gosnmp v1.35.0
 	github.com/grongor/panicwatch v0.4.2
 	github.com/prometheus/client_golang v1.11.0
 	github.com/spf13/viper v1.8.1
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	go.uber.org/zap v1.21.0
 	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac
 )
