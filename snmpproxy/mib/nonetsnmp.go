@@ -1,4 +1,4 @@
-// +build nonetsnmp
+//go:build nonetsnmp
 
 package mib
 

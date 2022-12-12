@@ -1,5 +1,4 @@
 //go:build !nonetsnmp
-// +build !nonetsnmp
 
 package mib_test
 

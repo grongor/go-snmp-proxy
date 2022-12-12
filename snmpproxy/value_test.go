@@ -23,7 +23,7 @@ func TestValueFormatter_Format(t *testing.T) {
 	tests := []struct {
 		name     string
 		pdu      gosnmp.SnmpPDU
-		expected interface{}
+		expected any
 	}{
 		{
 			name:     "not octet string",

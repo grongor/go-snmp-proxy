@@ -1,6 +1,6 @@
-GO_ACC ?= go-acc
-export BIN = ${PWD}/bin
-export GOBIN = $(BIN)
+GOLANGCI_LINT ?= go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+GO_ACC ?= go run github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+GO_ACC ?= go run github.com/ory/go-acc@latest
 
 .PHONY: build
 build:
@@ -10,12 +10,12 @@ build:
 check: lint test
 
 .PHONY: lint
-lint: $(BIN)/golangci-lint
-	$(BIN)/golangci-lint run
+lint:
+	$(GOLANGCI_LINT) run
 
 .PHONY: fix
-fix: $(BIN)/golangci-lint
-	$(BIN)/golangci-lint run --fix
+fix:
+	$(GOLANGCI_LINT) run --fix
 
 .PHONY: test
 test:
@@ -35,6 +35,3 @@ coverage:
 clean:
 	rm -rf bin
 	rm -rf dist
-
-$(BIN)/golangci-lint:
-	curl --retry 5 -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh

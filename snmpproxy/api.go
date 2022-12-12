@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -73,7 +73,7 @@ func (l *ApiListener) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 		_, _ = writer.Write(response.Bytes())
 	}()
 
-	body, err := ioutil.ReadAll(request.Body)
+	body, err := io.ReadAll(request.Body)
 	if err != nil {
 		l.logger.Debugw("failed to read request body", zap.Error(err))
 		writer.WriteHeader(http.StatusBadRequest)
@@ -141,7 +141,7 @@ func NewApiListener(
 		validator:         validator,
 		requester:         requester,
 		logger:            logger,
-		server:            &http.Server{Addr: listen, Handler: mux},
+		server:            &http.Server{Addr: listen, Handler: mux, ReadHeaderTimeout: time.Second},
 		socketPermissions: socketPermissions,
 	}
 

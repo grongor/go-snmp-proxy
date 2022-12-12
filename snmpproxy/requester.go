@@ -11,19 +11,19 @@ import (
 
 type requestResult struct {
 	requestNo int
-	result    []interface{}
+	result    []any
 	error     error
 }
 
 type Requester interface {
-	ExecuteRequest(apiRequest *ApiRequest) ([][]interface{}, error)
+	ExecuteRequest(apiRequest *ApiRequest) ([][]any, error)
 }
 
 type GosnmpRequester struct {
 	valueFormatter *ValueFormatter
 }
 
-func (r *GosnmpRequester) ExecuteRequest(apiRequest *ApiRequest) ([][]interface{}, error) {
+func (r *GosnmpRequester) ExecuteRequest(apiRequest *ApiRequest) ([][]any, error) {
 	resultsChan := make(chan requestResult)
 
 	for requestNo, request := range apiRequest.Requests {
@@ -36,7 +36,7 @@ func (r *GosnmpRequester) ExecuteRequest(apiRequest *ApiRequest) ([][]interface{
 	}
 
 	errChan := make(chan error)
-	results := make([][]interface{}, len(apiRequest.Requests))
+	results := make([][]any, len(apiRequest.Requests))
 
 	go func() {
 		var errored bool
@@ -106,7 +106,7 @@ func (r *GosnmpRequester) executeGet(apiRequest *ApiRequest, requestNo int, resu
 	result.result, err = r.processGetPacket(packet, request)
 }
 
-func (r *GosnmpRequester) processGetPacket(packet *gosnmp.SnmpPacket, request Request) ([]interface{}, error) {
+func (r *GosnmpRequester) processGetPacket(packet *gosnmp.SnmpPacket, request Request) ([]any, error) {
 	if packet.Error == gosnmp.NoSuchName {
 		var oidsString string
 
@@ -123,7 +123,7 @@ func (r *GosnmpRequester) processGetPacket(packet *gosnmp.SnmpPacket, request Re
 		return nil, fmt.Errorf("end of mib: %s", oidsString)
 	}
 
-	result := make([]interface{}, 0, len(packet.Variables)*2)
+	result := make([]any, 0, len(packet.Variables)*2)
 
 	for _, dataUnit := range packet.Variables {
 		if dataUnit.Type == gosnmp.NoSuchObject {

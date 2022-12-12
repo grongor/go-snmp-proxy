@@ -284,7 +284,7 @@ func TestMarshalResponse(t *testing.T) {
 	}{
 		{
 			name:     "success",
-			response: snmpproxy.Response{Result: [][]interface{}{{".1.2.3", 123, ".4.5.6", "lorem"}}},
+			response: snmpproxy.Response{Result: [][]any{{".1.2.3", 123, ".4.5.6", "lorem"}}},
 			expected: `{"result":[[".1.2.3",123,".4.5.6","lorem"]]}`,
 		},
 		{
@@ -307,5 +307,5 @@ func TestMarshalResponseWithError(t *testing.T) {
 		}
 	}()
 
-	(&snmpproxy.Response{Result: [][]interface{}{{make(chan struct{})}}}).Bytes()
+	(&snmpproxy.Response{Result: [][]any{{make(chan struct{})}}}).Bytes()
 }

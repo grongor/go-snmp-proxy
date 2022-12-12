@@ -3,6 +3,7 @@ package metrics
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -24,7 +25,7 @@ func Start(logger *zap.SugaredLogger, listen string) {
 	)
 
 	go func() {
-		err = http.ListenAndServe(listen, nil)
+		err = (&http.Server{Addr: listen, ReadHeaderTimeout: time.Second}).ListenAndServe()
 		if !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatalw("failed to start metrics listener", zap.Error(err))
 		}

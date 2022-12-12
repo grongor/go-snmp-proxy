@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -24,7 +23,7 @@ type mockRequester struct {
 	mock.Mock
 }
 
-func (r *mockRequester) ExecuteRequest(apiRequest *snmpproxy.ApiRequest) ([][]interface{}, error) {
+func (r *mockRequester) ExecuteRequest(apiRequest *snmpproxy.ApiRequest) ([][]any, error) {
 	args := r.Mock.Called(apiRequest)
 
 	result := args.Get(0)
@@ -32,7 +31,7 @@ func (r *mockRequester) ExecuteRequest(apiRequest *snmpproxy.ApiRequest) ([][]in
 		return nil, args.Error(1)
 	}
 
-	return result.([][]interface{}), args.Error(1)
+	return result.([][]any), args.Error(1)
 }
 
 type errReader struct{}
@@ -191,7 +190,7 @@ func TestListenerNoError(t *testing.T) {
 	requester := &mockRequester{}
 	defer requester.AssertExpectations(t)
 
-	requester.On("ExecuteRequest", mock.Anything).Once().Return([][]interface{}{{".1.2.3", 123}}, nil)
+	requester.On("ExecuteRequest", mock.Anything).Once().Return([][]any{{".1.2.3", 123}}, nil)
 
 	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "", 0)
 
@@ -214,7 +213,7 @@ func TestStartAndClose(t *testing.T) {
 	requester := &mockRequester{}
 	defer requester.AssertExpectations(t)
 
-	requester.On("ExecuteRequest", mock.Anything).Once().Return([][]interface{}{{".1.2.3", 123}}, nil)
+	requester.On("ExecuteRequest", mock.Anything).Once().Return([][]any{{".1.2.3", 123}}, nil)
 
 	listener := snmpproxy.NewApiListener(newValidator(), requester, zap.NewNop().Sugar(), "localhost:15721", 0)
 	listener.Start()
@@ -241,9 +240,9 @@ func TestStartAndCloseOnSocket(t *testing.T) {
 	requester := &mockRequester{}
 	defer requester.AssertExpectations(t)
 
-	requester.On("ExecuteRequest", mock.Anything).Once().Return([][]interface{}{{".1.2.3", 123}}, nil)
+	requester.On("ExecuteRequest", mock.Anything).Once().Return([][]any{{".1.2.3", 123}}, nil)
 
-	f, err := ioutil.TempFile("", "snmp-proxy-test-*.sock")
+	f, err := os.CreateTemp("", "snmp-proxy-test-*.sock")
 	assert.NoError(err)
 	assert.NoError(f.Close())
 	assert.NoError(os.Remove(f.Name()))
@@ -281,7 +280,7 @@ func TestStartSocketWithCorrectPermissions(t *testing.T) {
 
 	requester := &mockRequester{}
 
-	f, err := ioutil.TempFile("", "snmp-proxy-test-*.sock")
+	f, err := os.CreateTemp("", "snmp-proxy-test-*.sock")
 	assert.NoError(err)
 	assert.NoError(f.Close())
 	assert.NoError(os.Remove(f.Name()))
@@ -308,7 +307,7 @@ func TestStartError(t *testing.T) {
 }
 
 func read(r io.Reader) string {
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	if err != nil {
 		panic(err)
 	}

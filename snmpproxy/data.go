@@ -131,8 +131,8 @@ func (r *ApiRequest) UnmarshalJSON(data []byte) error {
 }
 
 type Response struct {
-	Error  string          `json:"error,omitempty"`
-	Result [][]interface{} `json:"result,omitempty"`
+	Error  string  `json:"error,omitempty"`
+	Result [][]any `json:"result,omitempty"`
 }
 
 func (r *Response) Bytes() []byte {
