@@ -1,6 +1,6 @@
 module github.com/grongor/go-snmp-proxy
 
-go 1.18
+go 1.19
 
 require (
 	github.com/TheZeroSlave/zapsentry v1.7.0
