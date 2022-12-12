@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/TheZeroSlave/zapsentry v1.12.0
 	github.com/gosnmp/gosnmp v1.32.0
-	github.com/grongor/panicwatch v0.4.2
+	github.com/grongor/panicwatch v1.0.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0
