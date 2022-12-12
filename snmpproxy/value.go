@@ -16,7 +16,7 @@ type ValueFormatter struct {
 	mibDataProvider *mib.DataProvider
 }
 
-func (f *ValueFormatter) Format(dataUnit gosnmp.SnmpPDU) interface{} {
+func (f *ValueFormatter) Format(dataUnit gosnmp.SnmpPDU) any {
 	if dataUnit.Type != gosnmp.OctetString {
 		return dataUnit.Value
 	}

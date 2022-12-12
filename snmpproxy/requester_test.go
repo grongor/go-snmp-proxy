@@ -65,7 +65,7 @@ func TestMain(m *testing.M) {
 		}
 
 		if time.Since(t) > time.Second*5 {
-			panic("failed to start snmpsimd")
+			panic("failed to start snmpsimd: " + buffer.String())
 		}
 	}
 
@@ -86,7 +86,7 @@ func TestGet(t *testing.T) {
 	assert.NoError(err)
 
 	assert.Equal(
-		[][]interface{}{
+		[][]any{
 			{
 				".1.3.6.1.2.1.25.2.3.1.2.1", ".1.3.6.1.2.1.25.2.1.2",
 				".1.3.6.1.2.1.25.2.3.1.2.4", ".1.3.6.1.2.1.25.2.1.9",
@@ -106,7 +106,7 @@ func TestGetNext(t *testing.T) {
 	assert.NoError(err)
 
 	assert.Equal(
-		[][]interface{}{
+		[][]any{
 			{
 				".1.3.6.1.2.1.25.2.3.1.2.1", ".1.3.6.1.2.1.25.2.1.2",
 				".1.3.6.1.2.1.25.2.3.1.2.4", ".1.3.6.1.2.1.25.2.1.9",
@@ -126,7 +126,7 @@ func TestWalk(t *testing.T) {
 	assert.NoError(err)
 
 	assert.Equal(
-		[][]interface{}{
+		[][]any{
 			{
 				".1.3.6.1.2.1.31.1.1.1.15.1000001", uint(100000),
 				".1.3.6.1.2.1.31.1.1.1.15.1000003", uint(60000),
@@ -148,7 +148,7 @@ func TestWalkWithSnmpVersion1(t *testing.T) {
 	assert.NoError(err)
 
 	assert.Equal(
-		[][]interface{}{
+		[][]any{
 			{
 				".1.3.6.1.2.1.31.1.1.1.15.1000001", uint(100000),
 				".1.3.6.1.2.1.31.1.1.1.15.1000003", uint(60000),
@@ -177,7 +177,7 @@ func TestWalkWholeTree(t *testing.T) {
 	assert.NoError(err)
 
 	assert.Equal(
-		[][]interface{}{
+		[][]any{
 			{
 				".1.3.6.1.2.1.1.1.0",
 				`Cisco IOS Software, C2960S Software (C2960S-UNIVERSALK9-M), Version 12.2(58)SE2, RELEASE SOFTWARE (fc1)
@@ -237,7 +237,7 @@ func TestWalkLastMibElement(t *testing.T) {
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.NoError(err)
 
-	assert.Equal([][]interface{}{{".1.7.8.9", "Don't know what I'm"}}, result)
+	assert.Equal([][]any{{".1.7.8.9", "Don't know what I'm"}}, result)
 }
 
 func TestWalkLastMibElementAndSnmpVersion1(t *testing.T) {
@@ -251,7 +251,7 @@ func TestWalkLastMibElementAndSnmpVersion1(t *testing.T) {
 	result, err := requester.ExecuteRequest(apiRequest)
 	assert.NoError(err)
 
-	assert.Equal([][]interface{}{{".1.7.8.9", "Don't know what I'm"}}, result)
+	assert.Equal([][]any{{".1.7.8.9", "Don't know what I'm"}}, result)
 }
 
 func TestMultipleRequests(t *testing.T) {
@@ -269,7 +269,7 @@ func TestMultipleRequests(t *testing.T) {
 	assert.NoError(err)
 
 	assert.Equal(
-		[][]interface{}{
+		[][]any{
 			{".1.3.6.1.2.1.1.3.0", uint32(293718542)},
 			{".1.7.8.9", "Don't know what I'm"},
 			{
