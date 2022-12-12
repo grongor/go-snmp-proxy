@@ -88,4 +88,4 @@ jobs:
             -   name: Install dependencies
                 run: sudo apt update && sudo apt install libsnmp-dev
             -   name: golangci-lint
-                uses: golangci/golangci-lint-action@v2
+                uses: golangci/golangci-lint-action@v3
