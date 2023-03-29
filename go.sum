@@ -40,6 +40,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/TheZeroSlave/zapsentry v1.12.0 h1:hhfwvD7pQbnCIOvAEGM4NXLiaX4b6W6ZWNtL6awSBGc=
 github.com/TheZeroSlave/zapsentry v1.12.0/go.mod h1:00uO/VpPrSJG/XigAfTi0F4WMFIw2DmP/IDVUhPBvNw=
+github.com/TheZeroSlave/zapsentry v1.15.0 h1:w/YglG4Hc2L2VoEH6JKC+3YzhUL18/OZRjJRSvyXZp4=
+github.com/TheZeroSlave/zapsentry v1.15.0/go.mod h1:D1YMfSuu6xnkhwFXxrronesmsiyDhIqo+86I3Ok+r64=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
@@ -75,6 +77,8 @@ github.com/fsnotify/fsnotify v1.6.0 h1:n+5WquG0fcWoWp6xPWfHdbskMCQaFnG6PfBrh1Ky4
 github.com/fsnotify/fsnotify v1.6.0/go.mod h1:sl3t1tCWJFWoRz9R8WJCbQihKKwmorjAbSClcnxKAGw=
 github.com/getsentry/sentry-go v0.16.0 h1:owk+S+5XcgJLlGR/3+3s6N4d+uKwqYvh/eS0AIMjPWo=
 github.com/getsentry/sentry-go v0.16.0/go.mod h1:ZXCloQLj0pG7mja5NK6NPf2V4A88YJ4pNlc2mOHwh6Y=
+github.com/getsentry/sentry-go v0.17.0 h1:UustVWnOoDFHBS7IJUB2QK/nB5pap748ZEp0swnQJak=
+github.com/getsentry/sentry-go v0.17.0/go.mod h1:B82dxtBvxG0KaPD8/hfSV+VcHD+Lg/xUS4JuQn1P4cM=
 github.com/glycerine/goconvey v0.0.0-20190410193231-58a59202ab31 h1:gclg6gY70GLy3PbkQ1AERPfmLMMagS60DKF78eWwLn8=
 github.com/glycerine/rbuf v0.0.0-20190314090850-75b78581bebe h1:S7HF/JKUdDrsd66htKdBOt/t3WvhU3l8EXe0U3WxEDA=
 github.com/glycerine/rbuf v0.0.0-20190314090850-75b78581bebe/go.mod h1:BOGkN1CszB3i4g9xn96RH4t5uXnxJjnC5/RWJ1Wx7GM=

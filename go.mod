@@ -3,7 +3,7 @@ module github.com/grongor/go-snmp-proxy
 go 1.19
 
 require (
-	github.com/TheZeroSlave/zapsentry v1.12.0
+	github.com/TheZeroSlave/zapsentry v1.15.0
 	github.com/gosnmp/gosnmp v1.35.0
 	github.com/grongor/panicwatch v1.0.0
 	github.com/prometheus/client_golang v1.14.0
@@ -18,7 +18,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/getsentry/sentry-go v0.16.0 // indirect
+	github.com/getsentry/sentry-go v0.17.0 // indirect
 	github.com/glycerine/rbuf v0.0.0-20190314090850-75b78581bebe // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
