@@ -70,8 +70,9 @@ func (r *GosnmpRequester) ExecuteRequest(apiRequest *ApiRequest) ([][]any, error
 
 func (r *GosnmpRequester) executeGet(apiRequest *ApiRequest, requestNo int, resultChan chan<- requestResult) {
 	var (
-		err    error
-		result = requestResult{requestNo: requestNo}
+		err     error
+		request = apiRequest.Requests[requestNo]
+		result  = requestResult{requestNo: requestNo}
 	)
 
 	defer func() {
@@ -82,10 +83,10 @@ func (r *GosnmpRequester) executeGet(apiRequest *ApiRequest, requestNo int, resu
 
 	snmp, err := r.createSnmpHandler(apiRequest)
 	if err != nil {
+		err = r.maybeConvertErrToTimeout(err, request.Oids)
+
 		return
 	}
-
-	request := apiRequest.Requests[requestNo]
 
 	var getter func(oids []string) (*gosnmp.SnmpPacket, error)
 	if request.RequestType == Get {
@@ -96,9 +97,7 @@ func (r *GosnmpRequester) executeGet(apiRequest *ApiRequest, requestNo int, resu
 
 	packet, err := getter(request.Oids)
 	if err != nil {
-		if strings.Contains(err.Error(), "timeout") {
-			err = fmt.Errorf("timeout: %s", strings.Join(request.Oids, ", "))
-		}
+		err = r.maybeConvertErrToTimeout(err, request.Oids)
 
 		return
 	}
@@ -146,8 +145,9 @@ func (r *GosnmpRequester) processGetPacket(packet *gosnmp.SnmpPacket, request Re
 
 func (r *GosnmpRequester) executeWalk(apiRequest *ApiRequest, requestNo int, resultChan chan<- requestResult) {
 	var (
-		err    error
-		result = requestResult{requestNo: requestNo}
+		err     error
+		request = apiRequest.Requests[requestNo]
+		result  = requestResult{requestNo: requestNo}
 	)
 
 	defer func() {
@@ -158,10 +158,10 @@ func (r *GosnmpRequester) executeWalk(apiRequest *ApiRequest, requestNo int, res
 
 	snmp, err := r.createSnmpHandler(apiRequest)
 	if err != nil {
+		err = r.maybeConvertErrToTimeout(err, request.Oids)
+
 		return
 	}
-
-	request := apiRequest.Requests[requestNo]
 
 	snmp.SetMaxRepetitions(request.MaxRepetitions)
 
@@ -180,9 +180,7 @@ func (r *GosnmpRequester) executeWalk(apiRequest *ApiRequest, requestNo int, res
 		return nil
 	})
 	if err != nil {
-		if strings.Contains(err.Error(), "timeout") {
-			err = fmt.Errorf("timeout: %s", oid)
-		}
+		err = r.maybeConvertErrToTimeout(err, []string{oid})
 
 		return
 	}
@@ -194,14 +192,10 @@ func (r *GosnmpRequester) executeWalk(apiRequest *ApiRequest, requestNo int, res
 	err = r.getWalkFailureReason(snmp, oid)
 }
 
-func (*GosnmpRequester) getWalkFailureReason(snmp gosnmp.Handler, oid string) error {
+func (r *GosnmpRequester) getWalkFailureReason(snmp gosnmp.Handler, oid string) error {
 	packet, err := snmp.GetNext([]string{oid})
 	if err != nil {
-		if strings.Contains(err.Error(), "timeout") {
-			return fmt.Errorf("timeout: %s", oid)
-		}
-
-		return err
+		return r.maybeConvertErrToTimeout(err, []string{oid})
 	}
 
 	if len(packet.Variables) != 1 || packet.Variables[0].Type == gosnmp.NoSuchObject {
@@ -213,6 +207,14 @@ func (*GosnmpRequester) getWalkFailureReason(snmp gosnmp.Handler, oid string) er
 	}
 
 	return fmt.Errorf("end of mib: %s", oid)
+}
+
+func (*GosnmpRequester) maybeConvertErrToTimeout(err error, oids []string) error {
+	if strings.Contains(err.Error(), "timeout") {
+		return fmt.Errorf("timeout: %s", strings.Join(oids, ", "))
+	}
+
+	return err
 }
 
 func (*GosnmpRequester) createSnmpHandler(apiRequest *ApiRequest) (gosnmp.Handler, error) {

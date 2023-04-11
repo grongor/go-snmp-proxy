@@ -499,14 +499,16 @@ func TestInvalidHost(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			assert := require.New(t)
 
-			apiRequest := apiRequest(get([]string{}), walk(""))
-			apiRequest.Host = test.host
+			for _, request := range []snmpproxy.Request{get([]string{""}), walk("")} {
+				apiRequest := apiRequest(request)
+				apiRequest.Host = test.host
 
-			requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
-			result, err := requester.ExecuteRequest(apiRequest)
-			assert.Nil(result)
-			assert.Error(err)
-			assert.Contains(err.Error(), test.err)
+				requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
+				result, err := requester.ExecuteRequest(apiRequest)
+				assert.Nil(result)
+				assert.Error(err)
+				assert.Contains(err.Error(), test.err)
+			}
 		})
 	}
 }
