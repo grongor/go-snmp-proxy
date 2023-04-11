@@ -10,9 +10,9 @@ jobs:
         runs-on: ubuntu-20.04
         steps:
             -   uses: actions/checkout@v3
-            -   uses: actions/setup-go@v3
+            -   uses: actions/setup-go@v4
                 with:
-                    go-version: '^1.17'
+                    go-version: '^1.20'
             -   name: Install dependencies
                 run: sudo apt update && sudo apt install libsnmp-dev
             -   name: Build
@@ -23,9 +23,9 @@ jobs:
         runs-on: ubuntu-20.04
         steps:
             -   uses: actions/checkout@v3
-            -   uses: actions/setup-go@v3
+            -   uses: actions/setup-go@v4
                 with:
-                    go-version: '^1.17'
+                    go-version: '^1.20'
             -   name: Build
                 run: go build -tags=nonetsnmp ./cmd/snmp-proxy
 
@@ -34,9 +34,9 @@ jobs:
         runs-on: ubuntu-20.04
         steps:
             -   uses: actions/checkout@v3
-            -   uses: actions/setup-go@v3
+            -   uses: actions/setup-go@v4
                 with:
-                    go-version: '^1.17'
+                    go-version: '^1.20'
             -   name: Install dependencies
                 run: sudo apt update && sudo apt install libsnmp-dev python3-pip snmp-mibs-downloader
             -   name: Install snmpsim
@@ -49,9 +49,9 @@ jobs:
         runs-on: ubuntu-20.04
         steps:
             -   uses: actions/checkout@v3
-            -   uses: actions/setup-go@v3
+            -   uses: actions/setup-go@v4
                 with:
-                    go-version: '^1.17'
+                    go-version: '^1.20'
             -   name: Install dependencies
                 run: sudo apt update && sudo apt install python3-pip
             -   name: Install snmpsim
@@ -64,9 +64,9 @@ jobs:
         runs-on: ubuntu-20.04
         steps:
             -   uses: actions/checkout@v3
-            -   uses: actions/setup-go@v3
+            -   uses: actions/setup-go@v4
                 with:
-                    go-version: '^1.17'
+                    go-version: '^1.20'
             -   name: Install dependencies
                 run: sudo apt update && sudo apt install libsnmp-dev python3-pip snmp-mibs-downloader
             -   name: Install snmpsim
