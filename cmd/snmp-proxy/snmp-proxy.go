@@ -60,7 +60,7 @@ func startPanicwatch(logger *zap.SugaredLogger) {
 
 	config := panicwatch.Config{
 		OnPanic: func(p panicwatch.Panic) {
-			log.Fatalw(p.Message, "panic", p)
+			log.Fatalw(string(p.Type)+": "+p.Message, "stack", p.Stack)
 		},
 		OnWatcherError: func(err error) {
 			log.Fatalw("watcher error", zap.Error(err))
