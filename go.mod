@@ -5,12 +5,12 @@ go 1.20
 require (
 	github.com/TheZeroSlave/zapsentry v1.15.0
 	github.com/gosnmp/gosnmp v1.35.0
-	github.com/grongor/panicwatch v1.0.0
+	github.com/grongor/panicwatch v1.1.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/spf13/viper v1.15.0
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.24.0
-	golang.org/x/sys v0.7.0
+	golang.org/x/sys v0.8.0
 )
 
 require (
