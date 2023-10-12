@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/TheZeroSlave/zapsentry v1.18.0
 	github.com/gosnmp/gosnmp v1.36.1
-	github.com/grongor/panicwatch v1.1.0
+	github.com/grongor/panicwatch v1.1.1
 	github.com/prometheus/client_golang v1.17.0
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
@@ -20,7 +20,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/getsentry/sentry-go v0.21.0 // indirect
 	github.com/glycerine/rbuf v0.0.0-20190314090850-75b78581bebe // indirect
-	github.com/go-errors/errors v1.4.2 // indirect
+	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
