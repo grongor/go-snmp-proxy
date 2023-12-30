@@ -3,7 +3,7 @@ module github.com/grongor/go-snmp-proxy
 go 1.20
 
 require (
-	github.com/TheZeroSlave/zapsentry v1.18.0
+	github.com/TheZeroSlave/zapsentry v1.20.2
 	github.com/gosnmp/gosnmp v1.36.1
 	github.com/grongor/panicwatch v1.1.1
 	github.com/prometheus/client_golang v1.17.0
