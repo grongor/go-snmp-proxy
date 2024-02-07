@@ -3,6 +3,8 @@ package snmpproxy
 import (
 	"errors"
 	"fmt"
+	"net"
+	"net/netip"
 	"strconv"
 	"strings"
 
@@ -220,20 +222,37 @@ func (*GosnmpRequester) maybeConvertErrToTimeout(err error, oids []string) error
 func (*GosnmpRequester) createSnmpHandler(apiRequest *ApiRequest) (gosnmp.Handler, error) {
 	snmp := gosnmp.NewHandler()
 
-	hostAndPort := strings.Split(apiRequest.Host, ":")
-	if len(hostAndPort) > 2 {
-		return nil, errors.New("invalid host, expected host[:port]")
-	}
+	var addrErr *net.AddrError
+	host, port, err := net.SplitHostPort(apiRequest.Host)
 
-	snmp.SetTarget(hostAndPort[0])
+	switch {
+	case err == nil:
+		snmp.SetTarget(host)
 
-	if len(hostAndPort) == 2 {
-		port, err := strconv.ParseUint(hostAndPort[1], 10, 16)
+		port, err := strconv.ParseUint(port, 10, 16)
 		if err != nil {
-			return nil, fmt.Errorf("invalid port: %w", err)
+			return nil, fmt.Errorf("invalid host port: %w", err)
 		}
 
 		snmp.SetPort(uint16(port))
+	case errors.As(err, &addrErr):
+		if addrErr.Err == "missing port in address" {
+			snmp.SetTarget(apiRequest.Host)
+
+			break
+		}
+
+		if addrErr.Err == "too many colons in address" {
+			if addr, err := netip.ParseAddr(apiRequest.Host); err == nil {
+				snmp.SetTarget(addr.String())
+
+				break
+			}
+		}
+
+		fallthrough
+	default:
+		return nil, fmt.Errorf("invalid host: %w", err)
 	}
 
 	snmp.SetCommunity(apiRequest.Community)

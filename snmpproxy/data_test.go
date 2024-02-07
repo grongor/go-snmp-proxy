@@ -33,6 +33,7 @@ func TestUnmarshalRequestType(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var requestType snmpproxy.RequestType
 			err := requestType.UnmarshalJSON(test.raw)
+
 			if test.err == "" {
 				require.NoError(t, err)
 				require.Equal(t, test.expected, requestType)
@@ -71,6 +72,7 @@ func TestUnmarshalSnmpVersion(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var version snmpproxy.SnmpVersion
 			err := version.UnmarshalJSON(test.raw)
+
 			if test.err == "" {
 				require.NoError(t, err)
 				require.Equal(t, test.expected, version)
@@ -135,6 +137,7 @@ func TestUnmarshalRequest(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var request snmpproxy.Request
 			err := request.UnmarshalJSON([]byte(test.raw))
+
 			if test.err == "" {
 				require.NoError(t, err)
 				require.Equal(t, test.expected, request)
@@ -266,6 +269,7 @@ func TestUnmarshalApiRequest(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var request snmpproxy.ApiRequest
 			err := request.UnmarshalJSON([]byte(test.raw))
+
 			if test.err == "" {
 				require.NoError(t, err)
 				require.Equal(t, test.expected, request)
