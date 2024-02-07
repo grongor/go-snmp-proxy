@@ -447,29 +447,53 @@ func TestGetNextWithSnmpVersion1AndEndOfMib(t *testing.T) {
 }
 
 func TestGetWithSnmpError(t *testing.T) {
-	assert := require.New(t)
+	tests := []struct {
+		name string
+		host string
+	}{
+		{name: "default port", host: "localhost"},
+		{name: "ipv6", host: "::1"},
+		{name: "ipv6 and port", host: "[::1]:15728"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert := require.New(t)
 
-	apiRequest := apiRequest(get([]string{".1.1"}))
-	apiRequest.Host = "localhost"
+			apiRequest := apiRequest(get([]string{".1.1"}))
+			apiRequest.Host = test.host
 
-	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
-	result, err := requester.ExecuteRequest(apiRequest)
-	assert.Nil(result)
-	assert.Error(err)
-	assert.Contains(err.Error(), "connection refused")
+			requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
+			result, err := requester.ExecuteRequest(apiRequest)
+			assert.Nil(result)
+			assert.Error(err)
+			assert.Contains(err.Error(), "connection refused")
+		})
+	}
 }
 
 func TestWalkWithSnmpError(t *testing.T) {
-	assert := require.New(t)
+	tests := []struct {
+		name string
+		host string
+	}{
+		{name: "default port", host: "localhost"},
+		{name: "ipv6", host: "::1"},
+		{name: "ipv6 and port", host: "[::1]:15728"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert := require.New(t)
 
-	apiRequest := apiRequest(walk(""))
-	apiRequest.Host = "localhost"
+			apiRequest := apiRequest(walk(""))
+			apiRequest.Host = test.host
 
-	requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
-	result, err := requester.ExecuteRequest(apiRequest)
-	assert.Nil(result)
-	assert.Error(err)
-	assert.Contains(err.Error(), "connection refused")
+			requester := snmpproxy.NewGosnmpRequester(snmpproxy.NewValueFormatter(mib.NewDataProvider(nil)))
+			result, err := requester.ExecuteRequest(apiRequest)
+			assert.Nil(result)
+			assert.Error(err)
+			assert.Contains(err.Error(), "connection refused")
+		})
+	}
 }
 
 func TestInvalidHost(t *testing.T) {
@@ -486,14 +510,18 @@ func TestInvalidHost(t *testing.T) {
 		{
 			name: "port is too large",
 			host: "localhost:154124",
-			err:  `invalid port: strconv.ParseUint: parsing "154124": value out of range`,
+			err:  `invalid host port: strconv.ParseUint: parsing "154124": value out of range`,
 		},
 		{
 			name: "port isn't integer",
 			host: "localhost:lorem",
-			err:  `invalid port: strconv.ParseUint: parsing "lorem": invalid syntax`,
+			err:  `invalid host port: strconv.ParseUint: parsing "lorem": invalid syntax`,
 		},
-		{name: "invalid host", host: "localhost:invalid:123", err: "invalid host, expected host[:port]"},
+		{
+			name: "invalid host",
+			host: "localhost:invalid:123",
+			err:  "invalid host: address localhost:invalid:123: too many colons in address",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -83,8 +83,7 @@ func (l *ApiListener) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 
-	err = json.Unmarshal(body, apiRequest)
-	if err != nil {
+	if err = json.Unmarshal(body, apiRequest); err != nil {
 		l.logger.Debugw("failed unmarshal API request", zap.Error(err), "requestBody", string(body))
 		writer.WriteHeader(http.StatusBadRequest)
 
@@ -93,8 +92,7 @@ func (l *ApiListener) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 
-	err = l.validator.Validate(apiRequest)
-	if err != nil {
+	if err = l.validator.Validate(apiRequest); err != nil {
 		l.logger.Debugw("invalid API request", zap.Error(err), "request", apiRequest)
 		writer.WriteHeader(http.StatusBadRequest)
 
@@ -103,8 +101,7 @@ func (l *ApiListener) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 		return
 	}
 
-	result, err := l.requester.ExecuteRequest(apiRequest)
-	if err == nil {
+	if result, err := l.requester.ExecuteRequest(apiRequest); err == nil {
 		l.logger.Debugw("request successful", "request", apiRequest)
 
 		writer.WriteHeader(http.StatusOK)
