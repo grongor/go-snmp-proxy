@@ -32,6 +32,8 @@ github.com/gopherjs/gopherjs v0.0.0-20210803090616-8f023c250c89 h1:cuZTXJQ2J5mpT
 github.com/gopherjs/gopherjs v0.0.0-20210803090616-8f023c250c89/go.mod h1:0RnbP5ioI0nqRf3R9iK3iQaUJgsn0htlZEHCMn8FSfw=
 github.com/gosnmp/gosnmp v1.37.0 h1:/Tf8D3b9wrnNuf/SfbvO+44mPrjVphBhRtcGg22V07Y=
 github.com/gosnmp/gosnmp v1.37.0/go.mod h1:GDH9vNqpsD7f2HvZhKs5dlqSEcAS6s6Qp099oZRCR+M=
+github.com/gosnmp/gosnmp v1.38.0 h1:I5ZOMR8kb0DXAFg/88ACurnuwGwYkXWq3eLpJPHMEYc=
+github.com/gosnmp/gosnmp v1.38.0/go.mod h1:FE+PEZvKrFz9afP9ii1W3cprXuVZ17ypCcyyfYuu5LY=
 github.com/grongor/panicwatch v1.1.1 h1:5aHecwCUMfvPsmVl9zyD+40sAVmeCIxuZykKo9qcN5k=
 github.com/grongor/panicwatch v1.1.1/go.mod h1:GPnUg2OR2wRVEuxrEFb1syDrUpPgttvYLkXoVDqYUkE=
 github.com/grongor/panicwatch v1.2.0 h1:MAYo6a0x1At++o2ZV4Jqob56YsHiSwUlFuztQ7SL9xA=

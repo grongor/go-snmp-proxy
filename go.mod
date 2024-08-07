@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/TheZeroSlave/zapsentry v1.23.0
-	github.com/gosnmp/gosnmp v1.37.0
+	github.com/gosnmp/gosnmp v1.38.0
 	github.com/grongor/panicwatch v1.2.0
 	github.com/prometheus/client_golang v1.19.0
 	github.com/spf13/viper v1.18.2
