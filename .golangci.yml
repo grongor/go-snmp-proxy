@@ -13,7 +13,6 @@ linters: # 2022-07-21 modified
         - durationcheck
         - errorlint
         - exhaustive
-        - exportloopref
         - gci
         - gochecknoglobals
         - gochecknoinits
@@ -21,7 +20,7 @@ linters: # 2022-07-21 modified
         - goconst
         - gocritic # probably tune
         - godot
-        - goerr113
+        - err113
         - gofumpt
         - gosec
         #        - ifshort # not yet mature, has some bugs
@@ -57,7 +56,15 @@ linters-settings:
             - fieldalignment # @todo fix later
 
     gosec:
-        excludes: [G501, G502, G503, G504, G505] # ignore imports, usages are still reported
+        excludes:
+            # https://github.com/securego/gosec/issues/1185
+            - G115
+            # ignore imports, usages are still reported
+            - G501
+            - G502
+            - G503
+            - G504
+            - G505
 
     revive: # v1.2.3
         ignoreGeneratedHeader: true
@@ -149,9 +156,9 @@ issues:
         -   path: _test\.go
             text: assignments should only be cuddled with other assignments
             linters: [wsl]
-        # ignore goerr113 dynamic errors definition error...not sure how to approach this correctly now
+        # ignore err113 dynamic errors definition error...not sure how to approach this correctly now
         -   text: do not define dynamic errors, use wrapped static errors instead
-            linters: [goerr113]
+            linters: [err113]
 
 output:
     sort-results: true

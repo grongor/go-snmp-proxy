@@ -11,12 +11,12 @@ permissions:
 jobs:
     build:
         name: Build
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-24.04
         steps:
             -   uses: actions/checkout@v4
             -   uses: actions/setup-go@v5
                 with:
-                    go-version: '^1.22'
+                    go-version: '^1.23'
             -   name: Install dependencies
                 run: sudo apt update && sudo apt install libsnmp-dev
             -   name: Build
@@ -24,57 +24,57 @@ jobs:
 
     build-no-netsnmp:
         name: Build without netsnmp
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-24.04
         steps:
             -   uses: actions/checkout@v4
             -   uses: actions/setup-go@v5
                 with:
-                    go-version: '^1.22'
+                    go-version: '^1.23'
             -   name: Build
                 run: go build -tags=nonetsnmp ./cmd/snmp-proxy
 
     test:
         name: Test
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-24.04
         steps:
             -   uses: actions/checkout@v4
             -   uses: actions/setup-go@v5
                 with:
-                    go-version: '^1.22'
+                    go-version: '^1.23'
             -   name: Install dependencies
-                run: sudo apt update && sudo apt install libsnmp-dev python3-pip snmp-mibs-downloader
+                run: sudo apt update && sudo apt install libsnmp-dev pipx snmp-mibs-downloader
             -   name: Install snmpsim
-                run: sudo pip3 install snmpsim
+                run: pipx install snmpsim
             -   name: Run tests
                 run: make test
 
     test-no-netsnmp:
         name: Test without netsnmp
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-24.04
         steps:
             -   uses: actions/checkout@v4
             -   uses: actions/setup-go@v5
                 with:
-                    go-version: '^1.22'
+                    go-version: '^1.23'
             -   name: Install dependencies
-                run: sudo apt update && sudo apt install python3-pip
+                run: sudo apt update && sudo apt install pipx
             -   name: Install snmpsim
-                run: sudo pip3 install snmpsim
+                run: pipx install snmpsim
             -   name: Run tests
                 run: GO_TEST_FLAGS=-tags=nonetsnmp make test
 
     coverage:
         name: Code Coverage
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-24.04
         steps:
             -   uses: actions/checkout@v4
             -   uses: actions/setup-go@v5
                 with:
-                    go-version: '^1.22'
+                    go-version: '^1.23'
             -   name: Install dependencies
-                run: sudo apt update && sudo apt install libsnmp-dev python3-pip snmp-mibs-downloader
+                run: sudo apt update && sudo apt install libsnmp-dev pipx snmp-mibs-downloader
             -   name: Install snmpsim
-                run: sudo pip3 install snmpsim
+                run: pipx install snmpsim
             -   name: Download go-acc
                 run: go install github.com/ory/go-acc@latest
             -   name: Generate Code Coverage
@@ -86,13 +86,13 @@ jobs:
 
     lint:
         name: Lint
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-24.04
         steps:
             -   uses: actions/checkout@v4
             -   uses: actions/setup-go@v5
                 with:
-                    go-version: '^1.22'
+                    go-version: '^1.23'
             -   name: Install dependencies
                 run: sudo apt update && sudo apt install libsnmp-dev
             -   name: golangci-lint
-                uses: golangci/golangci-lint-action@v5
+                uses: golangci/golangci-lint-action@v6
