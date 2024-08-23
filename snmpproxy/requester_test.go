@@ -43,7 +43,7 @@ func TestMain(m *testing.M) {
 
 	// #nosec
 	cmd := exec.Command(
-		"snmpsimd.py",
+		"snmpsim-command-responder-lite",
 		"--v2c-arch",
 		"--data-dir", path.Join(wd, "test_data"),
 		"--agent-udpv4-endpoint", "127.0.0.1:15728",
