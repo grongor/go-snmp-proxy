@@ -5,12 +5,12 @@ go 1.23
 require (
 	github.com/TheZeroSlave/zapsentry v1.23.0
 	github.com/gosnmp/gosnmp v1.38.0
-	github.com/grongor/panicwatch v1.2.0
+	github.com/grongor/panicwatch v1.3.0
 	github.com/prometheus/client_golang v1.20.3
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/sys v0.24.0
+	golang.org/x/sys v0.25.0
 )
 
 require (
