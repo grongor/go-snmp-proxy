@@ -20,7 +20,7 @@ jobs:
             -   name: Install dependencies
                 run: sudo apt update && sudo apt install libsnmp-dev
             -   name: GoReleaser
-                uses: goreleaser/goreleaser-action@v6
+                uses: goreleaser/goreleaser-action@v7
                 with:
                     args: release
                 env:
