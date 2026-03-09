@@ -1,16 +1,16 @@
 module github.com/grongor/go-snmp-proxy
 
-go 1.23
+go 1.24.0
 
 require (
 	github.com/TheZeroSlave/zapsentry v1.23.0
-	github.com/gosnmp/gosnmp v1.38.0
+	github.com/gosnmp/gosnmp v1.43.2
 	github.com/grongor/panicwatch v1.2.0
 	github.com/prometheus/client_golang v1.20.3
 	github.com/spf13/viper v1.19.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.11.1
 	go.uber.org/zap v1.27.0
-	golang.org/x/sys v0.24.0
+	golang.org/x/sys v0.40.0
 )
 
 require (
