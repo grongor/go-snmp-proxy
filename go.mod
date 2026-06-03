@@ -1,16 +1,16 @@
 module github.com/grongor/go-snmp-proxy
 
-go 1.23
+go 1.25.0
 
 require (
-	github.com/TheZeroSlave/zapsentry v1.23.0
+	github.com/TheZeroSlave/zapsentry v1.24.0
 	github.com/gosnmp/gosnmp v1.38.0
 	github.com/grongor/panicwatch v1.2.0
 	github.com/prometheus/client_golang v1.20.3
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
-	go.uber.org/zap v1.27.0
-	golang.org/x/sys v0.24.0
+	go.uber.org/zap v1.27.1
+	golang.org/x/sys v0.43.0
 )
 
 require (
@@ -18,7 +18,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/getsentry/sentry-go v0.28.1 // indirect
+	github.com/getsentry/sentry-go v0.46.0 // indirect
 	github.com/glycerine/rbuf v0.0.0-20190314090850-75b78581bebe // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -41,7 +41,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948 // indirect
-	golang.org/x/text v0.17.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
