@@ -1,6 +1,6 @@
 module github.com/grongor/go-snmp-proxy
 
-go 1.23
+go 1.24
 
 require (
 	github.com/TheZeroSlave/zapsentry v1.23.0
@@ -22,7 +22,7 @@ require (
 	github.com/glycerine/rbuf v0.0.0-20190314090850-75b78581bebe // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/klauspost/compress v1.18.7 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
